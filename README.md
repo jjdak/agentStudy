@@ -24,10 +24,10 @@
 
    适合讲：
 
-   - GPT-2 到 ChatGPT、GPT-4、GPT-5.5 的演进；
+   - GPT-2 到 ChatGPT、GPT-4、GPT-5.5、GPT-5.6 Preview 的演进；
    - Claude Opus 4.8 的 honesty / uncertainty / pushback；
    - GLM-5.2 和 DeepSeek-V4-Pro 的长上下文、推理 effort、开放部署；
-   - Claude Code、Codex、OpenClaw 这类 agent 如何通过工具反馈降低一部分幻觉；
+   - Claude Code、Codex、OpenClaw 这类 agent 如何通过工具反馈降低一部分幻觉，以及多 agent 如何产生集体幻觉；
    - 哪些结论有公开资料支持，哪些属于工程机制推断。
 
 3. [03_practical_playbook.md](./03_practical_playbook.md)
@@ -37,11 +37,12 @@
    适合讲：
 
    - 外部 AI 工具的使用边界；
-   - 软件研发中的低/中/高风险任务分类；
-   - 如何组织上下文、写提示词、要求模型列假设；
-   - 如何用编译、测试、lint、官方文档和人工 review 验证；
-   - agent 工具的验收规范；
-   - 现场练习和检查清单。
+   - 如何在生成前定义工件、约束、判定器和验收标准；
+   - 如何通过来源约束、RAG 和 claim-evidence matrix 建立证据链；
+   - 如何使用 Chain-of-Verification、编译、测试、工具反馈和人工 review；
+   - 多 Agent 为什么必须使用相互独立的证据；
+   - 如何记录失败样本并形成回归测试；
+   - 一套可直接采用的任务模板和完整调度器练习。
 
 ## 建议培训结构
 
