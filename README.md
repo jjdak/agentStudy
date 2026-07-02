@@ -1,48 +1,36 @@
-# LLM 幻觉培训材料
+# LLM 幻觉与 Agent 使用培训材料
 
-这是一组面向软件工程师的内部培训材料，用来解释大语言模型为什么会产生幻觉、先进模型如何降低幻觉，以及在日常研发辅助中如何降低幻觉带来的影响。
+这是一组面向软件工程师的内部培训材料，用来解释大语言模型为什么会产生幻觉、先进模型如何降低幻觉、如何在日常研发辅助中降低幻觉影响，以及怎样选择、指挥和验证 Agent。
 
 > 使用边界：材料中的案例均为通用或虚构内容，不包含公司源码、日志、接口、芯片型号、芯片结构、客户问题或内部架构。
 
 ## 推荐阅读顺序
 
-1. [01_hallucination_principles.md](./01_hallucination_principles.md)
+1. [01_llm_hallucination_guide.md](./01_llm_hallucination_guide.md)
 
-   主题：幻觉的产生原因和原理。
-
-   适合讲：
-
-   - LLM 为什么会把错误内容说得很流畅；
-   - GPT-2 / Transformer / next-token prediction；
-   - attention、softmax、temperature、采样；
-   - 数据缺口、训练目标、评测激励、上下文缺失；
-   - 为什么“看起来合理”不等于“事实正确”。
-
-2. [02_model_mitigation_strategies.md](./02_model_mitigation_strategies.md)
-
-   主题：先进模型和 agent 系统如何降低幻觉。
+   主题：LLM 幻觉的原理、模型降低方案和实务工作流。
 
    适合讲：
 
-   - GPT-2 到 ChatGPT、GPT-4、GPT-5.5、GPT-5.6 Preview 的演进；
-   - Claude Opus 4.8 的 honesty / uncertainty / pushback；
-   - GLM-5.2 和 DeepSeek-V4-Pro 的长上下文、推理 effort、开放部署；
-   - Claude Code、Codex、OpenClaw 这类 agent 如何通过工具反馈降低一部分幻觉，以及多 agent 如何产生集体幻觉；
-   - 哪些结论有公开资料支持，哪些属于工程机制推断。
+   - Transformer、next-token prediction、softmax 和幻觉成因；
+   - GPT-2 到现代推理模型的技术演进；
+   - 诚实性训练、长上下文、检索、工具和 Agent 反馈；
+   - 如何定义工件、约束、判定器和验收标准；
+   - RAG、claim-evidence matrix、Chain-of-Verification 和工具验证；
+   - 根因调试、人工放行和失败回归。
 
-3. [03_practical_playbook.md](./03_practical_playbook.md)
+2. [02_agent_usage_guide.md](./02_agent_usage_guide.md)
 
-   主题：使用中如何降低幻觉影响。
+   主题：Agent 的任务选择、指令、编排、验证和成本控制。
 
    适合讲：
 
-   - 外部 AI 工具的使用边界；
-   - 如何在生成前定义工件、约束、判定器和验收标准；
-   - 如何通过来源约束、RAG 和 claim-evidence matrix 建立证据链；
-   - 如何使用 Chain-of-Verification、编译、测试、工具反馈和人工 review；
-   - 多 Agent 为什么必须使用相互独立的证据；
-   - 如何记录失败样本并形成回归测试；
-   - 一套可直接采用的任务模板和完整调度器练习。
+   - Agent、普通聊天和固定工作流的区别；
+   - 哪些任务适合或不适合 Agent；
+   - 如何写任务合同、拆分复杂任务和设置完成标准；
+   - 什么时候使用多个子 Agent，以及如何避免重复和集体错误；
+   - 如何控制工具、权限、隐私、费用和停止条件；
+   - 研究、编程和办公自动化的可复制提示词模板。
 
 ## 建议培训结构
 
@@ -50,20 +38,31 @@
 
 | 时间 | 内容 | 对应文档 |
 |---:|---|---|
-| 10 分钟 | AI 能做什么、不能做什么 | README + 03 |
-| 20 分钟 | 幻觉原理：GPT-2 动画和 next-token prediction | 01 |
-| 20 分钟 | 先进模型和 agent 如何降低幻觉 | 02 |
-| 20 分钟 | 脱敏材料现场练习：脚本、调度器、测试 | 03 |
-| 10 分钟 | 安全规范与讨论 | 03 |
+| 10 分钟 | AI 能做什么、不能做什么 | README + 01 第三部分 |
+| 20 分钟 | 幻觉原理：GPT-2 动画和 next-token prediction | 01 第一部分 |
+| 20 分钟 | 先进模型和 Agent 如何降低幻觉 | 01 第二部分 |
+| 20 分钟 | 脱敏练习：脚本、调度器、测试和证据链 | 01 第三部分 |
+| 10 分钟 | 安全规范与讨论 | 01 第三部分 |
 
-## 对同事最重要的三句话
+Agent 专题建议另安排 60～90 分钟：
+
+| 时间 | 内容 | 对应文档 |
+|---:|---|---|
+| 15 分钟 | Agent 与聊天/工作流的区别，任务选择 | 02 |
+| 20 分钟 | 指令、拆分、工具和完成标准 | 02 |
+| 15 分钟 | 多 Agent、成本、权限和安全 | 02 |
+| 20 分钟 | 研究、编程、办公自动化练习 | 02 |
+| 10 分钟 | 复盘失败案例和制定试点计划 | 02 |
+
+## 对同事最重要的四句话
 
 1. 幻觉不是模型“故意撒谎”，而是概率生成、数据缺口、奖励机制、上下文不足和验证缺失共同造成的。
 2. 先进模型降低幻觉靠的是系统工程：更好的数据、后训练、推理、工具、检索、评测、监控，而不是某个单一魔法开关。
 3. 软件工程里最可靠的反幻觉方法是：脱敏输入、明确假设、要求证据、运行验证、人工 review。
+4. Agent 应使用最低必要复杂度：先尝试确定性程序或单 Agent，只有任务可独立并行且收益覆盖成本时才增加子 Agent。
 
 ## 文件维护建议
 
-- 需要补充公式、Transformer 动画、论文细节时，优先改 `01_hallucination_principles.md`。
-- 需要补充某个新模型或 agent 工具时，优先改 `02_model_mitigation_strategies.md`。
-- 需要补充内部使用规范、提示词模板、现场练习时，优先改 `03_practical_playbook.md`。
+- 需要补充幻觉原理、模型方案、验证方法或反幻觉案例时，改 `01_llm_hallucination_guide.md`。
+- 需要补充 Agent 任务选择、编排、成本、权限或应用案例时，改 `02_agent_usage_guide.md`。
+- 模型、产品功能、价格和 API 变化较快，培训前应更新资料核对日期并复查官方来源。
