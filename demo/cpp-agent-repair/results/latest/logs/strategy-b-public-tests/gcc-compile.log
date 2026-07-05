@@ -1,0 +1,12 @@
+[ 25%] Building C object CMakeFiles/safe_ops.dir/src/safe_ops.c.o
+<demo-root>/.work/strategy-b-public-tests/src/safe_ops.c: In function 'cache_remove':
+<demo-root>/.work/strategy-b-public-tests/src/safe_ops.c:46:37: error: pointer 'current' used after 'free' [-Werror=use-after-free]
+   46 |             *removed_value = current->value; /* Still reads freed memory. */
+      |                              ~~~~~~~^~~~~~~
+<demo-root>/.work/strategy-b-public-tests/src/safe_ops.c:45:13: note: call to 'free' here
+   45 |             free(current);
+      |             ^~~~~~~~~~~~~
+cc1: all warnings being treated as errors
+make[2]: *** [CMakeFiles/safe_ops.dir/src/safe_ops.c.o] Error 1
+make[1]: *** [CMakeFiles/safe_ops.dir/all] Error 2
+make: *** [all] Error 2

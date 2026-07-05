@@ -1,0 +1,5 @@
+candidate,scope,gcc_build,clang_build,public_tests,static_analysis,hidden_tests,sanitizer,fuzz_smoke,accepted
+buggy,PASS,FAIL,PASS,FAIL,PASS,FAIL,FAIL,FAIL,FAIL
+strategy-a-one-shot,PASS,FAIL,PASS,PASS,PASS,FAIL,FAIL,FAIL,FAIL
+strategy-b-public-tests,PASS,FAIL,PASS,PASS,PASS,FAIL,FAIL,FAIL,FAIL
+strategy-c-reliable,PASS,PASS,PASS,PASS,PASS,PASS,PASS,PASS,PASS

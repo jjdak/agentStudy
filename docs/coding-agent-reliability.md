@@ -17,6 +17,8 @@
 
 如果只想直接开始使用，可先执行 [一页检查清单](./03_coding_agent_reliability_checklist.md)，再阅读第 6 节“本文建议的 SOP”，并按任务类型查第 9 节补充流程；附录 A 可直接复制给 Codex 或 Claude Code。
 
+如果希望直观看到“一句话修复”“只跑公开测试”和“可靠流程”的差异，请运行 [C/C++ Coding Agent 可靠性 Demo](./04_coding_agent_reliability_experiment.md)。它用一个带五类 Bug 的小仓库，把本文原则转化为可执行的编译、测试、静态分析、Sanitizer、隐藏回归和结果日志。
+
 ### 证据强度
 
 对 Coding Agent 结果，建议按以下顺序优先取证：

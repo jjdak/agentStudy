@@ -4,9 +4,18 @@
 
 > 使用边界：示例仅使用公开、虚构或明确授权的材料。使用任何 AI 服务前，应确认其数据政策，不提交个人隐私、账号凭证、商业秘密、受保密约束的工作资料或其他未经授权的数据。
 
+## 仓库目录
+
+```text
+docs/           个人学习文档
+docs/reviews/   文档审校记录
+demo/           可运行的学习 Demo
+README.md       阅读顺序和仓库入口
+```
+
 ## 推荐阅读顺序
 
-1. [01_llm_hallucination_guide.md](./01_llm_hallucination_guide.md)
+1. [01_llm_hallucination_guide.md](./docs/01_llm_hallucination_guide.md)
 
    主题：LLM 幻觉的原理、模型降低方案和实务工作流。
 
@@ -19,7 +28,7 @@
    - RAG、claim-evidence matrix、Chain-of-Verification 和工具验证；
    - 根因调试、人工放行和失败回归。
 
-2. [02_agent_usage_guide.md](./02_agent_usage_guide.md)
+2. [02_agent_usage_guide.md](./docs/02_agent_usage_guide.md)
 
    主题：Agent 的任务选择、指令、编排、验证和成本控制。
 
@@ -32,11 +41,11 @@
    - 如何控制工具、权限、隐私、费用和停止条件；
    - 研究、编程和办公自动化的可复制提示词模板。
 
-3. [coding-agent-reliability.md](./coding-agent-reliability.md)
+3. [coding-agent-reliability.md](./docs/coding-agent-reliability.md)
 
    主题：Coding Agent 的验证、权限、风险分级与质量保障。
 
-   建议先使用 [03_coding_agent_reliability_checklist.md](./03_coding_agent_reliability_checklist.md) 完成一次小任务，再按遇到的问题回到专题篇查阅证据和完整流程。
+   建议先使用 [03_coding_agent_reliability_checklist.md](./docs/03_coding_agent_reliability_checklist.md) 完成一次小任务，再按遇到的问题回到专题篇查阅证据和完整流程。
 
    建议重点学习：
 
@@ -45,6 +54,12 @@
    - 如何保护测试、CI、凭据、网络和用户已有修改；
    - 如何让完成声明绑定 commit、diff、命令、退出码和运行环境；
    - 如何按风险升级测试、审查、发布、监控和回滚。
+
+4. [04_coding_agent_reliability_experiment.md](./docs/04_coding_agent_reliability_experiment.md)
+
+   主题：通过一个带五类缺陷的可运行 C/C++ 小项目，直观比较三种 Agent 使用策略。
+
+   配套 [Demo](./demo/cpp-agent-repair/README.md) 会实际运行 GCC、Clang、CTest、cppcheck、隐藏回归、ASan/UBSan 和 fuzz-smoke，并保存汇总与原始日志。
 
 ## 建议学习路线
 
@@ -84,6 +99,7 @@
 | 2 | 测试 oracle、测试投机和独立验证 | Coding Agent 专题第 2～4 章 |
 | 3 | Codex/Claude Code 案例、长任务状态和工具边界 | Coding Agent 专题第 5 章 |
 | 4 | 风险分级、SOP、回滚和一次完整实践 | Coding Agent 专题第 6～10 章 |
+| 5 | 运行 C/C++ 缺陷修复 Demo，比较三种策略 | 04 与配套 Demo |
 
 ## 最重要的五句话
 
@@ -98,4 +114,5 @@
 - 需要补充幻觉原理、模型方案、验证方法或反幻觉案例时，改 `01_llm_hallucination_guide.md`。
 - 需要补充 Agent 任务选择、编排、成本、权限或应用案例时，改 `02_agent_usage_guide.md`。
 - 需要补充编程 Agent 的失败案例、验证技术、风险分级或完整 SOP 时，改 `coding-agent-reliability.md`；只调整日常执行步骤时，改 `03_coding_agent_reliability_checklist.md`。
+- 需要修改 C/C++ 可靠性 Demo 的缺陷、策略、验证脚本或结果说明时，改 `docs/04_coding_agent_reliability_experiment.md` 和 `demo/cpp-agent-repair/`。
 - 模型、产品功能、价格和 API 变化较快，重新学习相关章节前应检查资料核对日期并复查官方来源。
