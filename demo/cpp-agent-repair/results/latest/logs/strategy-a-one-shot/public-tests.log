@@ -1,8 +1,8 @@
 Internal ctest changing into directory: <demo-root>/.work/strategy-a-one-shot/build-clang
 Test project <demo-root>/.work/strategy-a-one-shot/build-clang
     Start 1: public_tests
-1/1 Test #1: public_tests .....................   Passed    0.32 sec
+1/1 Test #1: public_tests .....................   Passed    0.35 sec
 
 100% tests passed, 0 tests failed out of 1
 
-Total Test time (real) =   0.32 sec
+Total Test time (real) =   0.36 sec

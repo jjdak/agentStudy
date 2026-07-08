@@ -1,0 +1,6 @@
+[ 25%] Building C object CMakeFiles/safe_ops.dir/src/safe_ops.c.o
+[ 50%] Linking C static library libsafe_ops.a
+[ 50%] Built target safe_ops
+[ 75%] Building C object CMakeFiles/public_tests.dir/tests/public_tests.c.o
+[100%] Linking C executable public_tests
+[100%] Built target public_tests

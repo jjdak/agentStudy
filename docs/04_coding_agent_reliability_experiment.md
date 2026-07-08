@@ -5,6 +5,8 @@
 > 配套代码：[C/C++ Coding Agent 可靠性 Demo](../demo/cpp-agent-repair/README.md)
 >
 > 实际结果：[最近一次运行报告](../demo/cpp-agent-repair/results/latest/REPORT.md)
+>
+> 子 Agent 策略实验：[真实子 Agent Prompt 策略实验报告](../demo/cpp-agent-repair/results/agent_prompt_strategy_report.md)
 
 ## 1. 这个 Demo 要回答什么
 
@@ -16,21 +18,28 @@
 2. 更完整的任务要求和验证流程，能发现哪些“一句话修复”遗漏的问题？
 3. 如何让“已完成”变成可以从日志和工具输出中复查的结论？
 
-它不是模型排行榜，也不是论文级 benchmark。Demo 使用固定候选补丁，保证每次运行都能稳定展示质量门禁的作用；之后可以把候选补丁换成真实 Agent 输出。
+它不是模型排行榜，也不是论文级评测。Demo 既包含固定候选补丁，用来稳定展示质量门禁的作用；也可以把候选补丁换成真实 Agent 输出，观察不同 prompt 策略的实际差异。
 
-## 2. 来自成熟开源项目的最小借鉴
+## 2. 重新定位：不要把 Demo 变成“难倒 Agent 的题”
 
-本 Demo 不复刻大型基准，只抽取几个已经被广泛使用的结构：
+这次真实子 Agent 实验带来了一个重要观察：强 Agent 在小型、局部、语义清晰的代码上，即使拿到很短的 prompt，也可能主动补全隐藏风险并修对全部问题。
 
-| 来源 | 借鉴内容 | Demo 中的实现 |
-|---|---|---|
-| [Multi-SWE-bench](https://github.com/multi-swe-bench/multi-swe-bench) | Agent 产生补丁，独立 harness 评分 | `candidates/` 与 `scripts/run_demo.sh` 分离 |
-| [BUGSC++](https://github.com/Suresoft-GLaDOS/bugscpp/) | 可重复的 C/C++ 缺陷环境 | 固定源码、编译器命令和测试入口 |
-| [TutorCode/CREF](https://github.com/GLEAM-Lab/CREF) | 公开测试与隐藏 judge 分离 | `project/tests/` 与 `oracle/hidden_tests.c` 分离 |
-| [LLM-CEGIS-Repair](https://github.com/pmorvalho/LLM-CEGIS-Repair) | 失败反例帮助下一轮修正 | 可把隐藏失败作为受控反馈，再提交新候选 |
-| [OSS-Fuzz-Gen](https://github.com/google/oss-fuzz-gen) | 用模型外运行信号检查代码 | ASan/UBSan 与确定性 fuzz-smoke |
+所以，这个 Demo 不再试图证明“复杂 prompt 一定让功能正确率更高”。那个目标很容易被模型能力本身掩盖，也容易把学习者带向不断寻找更难题的方向。
 
-ManyBugs 和 Codeflaws 适合以后扩充真实缺陷数量；当前 Demo 优先保证几分钟内可以读懂、运行和修改。
+新的定位是：
+
+> 比较不同 prompt 策略是否让 Agent 的修复过程更可审计、更全面、更容易复盘，而不仅仅是比较最终是否通过测试。
+
+具体比较对象从“能不能修对”扩展为：
+
+- 是否说明根因，而不是只说明改了什么；
+- 是否覆盖公开测试之外的边界和回归风险；
+- 是否明确修改范围；
+- 是否区分已经运行的检查和没有运行的检查；
+- 是否暴露环境、工具链、Sanitizer 等验证不确定性；
+- 是否能让人工 reviewer 快速判断“它是不是理解了问题”。
+
+这更接近个人或工程使用 Agent 时真正关心的问题：强 Agent 可以很聪明，但我们仍然需要让它的聪明变得可控、可验证、可接管。
 
 ## 3. 项目结构
 
@@ -45,7 +54,7 @@ demo/cpp-agent-repair/
 │   ├── 01_one_shot.md
 │   ├── 02_public_test_loop.md
 │   └── 03_reliable_flow.md
-├── candidates/                # 固定候选补丁夹具
+├── candidates/                # 固定候选补丁夹具和真实 Agent 输出
 │   ├── strategy-a-one-shot/
 │   ├── strategy-b-public-tests/
 │   └── strategy-c-reliable/
@@ -116,7 +125,7 @@ demo/cpp-agent-repair/
 
 完整提示词见 [03_reliable_flow.md](../demo/cpp-agent-repair/prompts/03_reliable_flow.md)。
 
-这里最重要的变化不是“提示词更长”，而是完成标准可以由模型之外的工具判定。
+这里最重要的变化不是“提示词更长”，而是 prompt 把 Agent 的工作方式从“直接给答案”约束成“说明根因、控制范围、暴露风险、等待独立验证”。
 
 ## 6. 验证流水线
 
@@ -127,7 +136,7 @@ cd demo/cpp-agent-repair
 ./scripts/run_demo.sh
 ```
 
-验证脚本对初始代码和三个候选版本执行相同流程：
+验证脚本对初始代码和 `candidates/*` 下的所有候选版本执行相同流程：
 
 ```mermaid
 flowchart LR
@@ -163,15 +172,42 @@ flowchart LR
 | 候选版本 | GCC | Clang | 公开测试 | cppcheck | 隐藏测试 | ASan/UBSan | fuzz-smoke | 接受 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | `buggy` | FAIL | PASS | FAIL | PASS | FAIL | FAIL | FAIL | FAIL |
+| `agent-one-shot-1` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| `agent-one-shot-2` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| `agent-public-test-loop-1` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| `agent-public-test-loop-2` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| `agent-reliable-flow-1` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| `agent-reliable-flow-2` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
 | `strategy-a-one-shot` | FAIL | PASS | PASS | PASS | FAIL | FAIL | FAIL | FAIL |
 | `strategy-b-public-tests` | FAIL | PASS | PASS | PASS | FAIL | FAIL | FAIL | FAIL |
 | `strategy-c-reliable` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
 
-这次运行揭示了三个很直观的事实：
+这次运行揭示了几个很直观的事实：
 
 - 策略 A/B 都让公开测试变绿，但仍不能接受；
 - GNU GCC 的严格告警直接发现了 Use-after-free，而本次 cppcheck 没有发现，说明静态工具之间也不能互相替代；
 - 策略 B 的 Sanitizer 日志明确报告 `heap-use-after-free`，fuzz-smoke 则立即发现二进制计数回归；策略 C 才通过全部门禁。
+- 真实子 Agent 的 6 次运行全部通过门禁，说明在当前小型 Demo 上，当前 Coding Agent 即使在 one-shot 条件下也能通过源码语义主动修复隐藏问题。
+- 本轮真实实验没有证明 reliable-flow 的最终正确率更高，但 reliable-flow 的输出更容易审计：它明确列出根因、检查边界、未完成验证和环境风险。
+
+真实子 Agent 实验的完整记录见 [agent_prompt_strategy_report.md](../demo/cpp-agent-repair/results/agent_prompt_strategy_report.md)。学习时应区分两类结果：固定候选用于稳定展示质量门禁；真实 Agent 候选用于观察 prompt 策略在当前模型和任务上的实际效果。
+
+### 从思考路径和全面性比较，而不是只看 PASS/FAIL
+
+本轮 6 个真实子 Agent 都通过了最终门禁，但它们的输出质量并不完全一样。可以按下面的维度阅读：
+
+| 维度 | one-shot | public-test-loop | reliable-flow |
+|---|---|---|---|
+| 最终功能结果 | 通过 | 通过 | 通过 |
+| 修复说明 | 能列出改动点 | 能列出改动点和公开测试结果 | 能建立“根因 → 修复”的映射 |
+| 验证意识 | 主要报告公开测试 | 主要围绕公开测试迭代 | 区分公开检查、未运行检查和独立验证 |
+| 风险披露 | 较少 | 有时提到未完成检查 | 明确记录工具链风险、Sanitizer 未完成等边界 |
+| reviewer 接管成本 | 需要 reviewer 自己反推根因 | 中等 | 最低，信息结构最接近工程复盘 |
+| 防止虚假完成 | 依赖外部验证器 | 依赖外部验证器 | prompt 本身也要求不能夸大验证结论 |
+
+因此，这个 Demo 的结论不是“可靠 prompt 才能修对”，而是：
+
+> 在强 Agent 也能修对的情况下，可靠 prompt 的价值主要体现在过程质量：它让输出更全面、更诚实、更方便人审查。
 
 学习时不要只看汇总表。打开：
 
@@ -197,25 +233,31 @@ results/latest/logs/<candidate>/fuzz-smoke.log
 6. 由 Agent 会话之外的脚本运行相同验证；
 7. 至少重复三次，因为模型输出具有随机性。
 
-建议记录一张简单表，而不立即做复杂统计：
+建议记录两张表。第一张仍然记录工具验证结果：
 
 | run | 策略 | 公开测试 | 隐藏测试 | Sanitizer | fuzz | 越界修改 | 耗时 |
 |---|---|---:|---:|---:|---:|---:|---:|
 
-当运行次数增加、需要比较模型或 Agent 产品时，再考虑更严格的随机化、盲审和置信区间。
+第二张专门记录过程质量：
 
-## 9. 第二个 Demo：让 Agent 制作完整项目
+| run | 策略 | 是否说明根因 | 是否覆盖 5 类风险 | 是否说明验证边界 | 是否披露不确定性 | reviewer 复盘难度 |
+|---|---|---:|---:|---:|---:|---|
 
-缺陷修复 Demo 跑通后，可以增加“从规格创建完整项目”：
+这里的目标不是做严格模型评测，而是训练自己看懂 Agent 输出：它是只给了一个看似完成的答案，还是留下了足够证据让你放心接管。
 
-```text
-目标：实现一个小型任务调度器库和 CLI。
-固定输入：API、行为样例、错误处理、性能边界和文件范围。
-隐藏验收：边界测试、属性测试、静态分析、Sanitizer 和命令行快照。
-比较策略：一句话生成 / 分阶段计划 / 任务合同 + 分层验收。
-```
+## 9. 如何判断 prompt 是否真的更好
 
-它能展示 Agent 对需求拆分、文件组织和完整交付的影响，但变量比 Bug 修复更多。建议复用当前 harness 的“公开项目—候选结果—独立 oracle—报告”结构，而不是重新设计一套流程。
+不要只问“结果是否 PASS”。对于强模型，很多简单任务都会 PASS。更有用的问题是：
+
+1. 它有没有先定位根因，再修改代码？
+2. 它有没有解释为什么修改发生在这里，而不是在报错表现处打补丁？
+3. 它有没有主动检查公开测试没覆盖的边界？
+4. 它有没有把“我运行过的检查”和“还没验证的风险”分开？
+5. 它有没有限制修改范围，避免顺手改测试、改接口、改无关文件？
+6. 它有没有在工具卡住或环境异常时如实说明，而不是把尝试说成通过？
+7. 它的最终说明是否足够让另一个人继续 review？
+
+如果一个 prompt 能稳定诱导 Agent 输出这些信息，即使最终功能正确率没有明显差异，它仍然是更适合工程使用的 prompt。
 
 ## 10. 当前 Demo 的边界
 
@@ -225,4 +267,4 @@ results/latest/logs/<candidate>/fuzz-smoke.log
 - macOS 上使用 ASan/UBSan，未单独启用 LeakSanitizer；
 - Demo 代码很小，不能代表大型遗留项目、并发问题或复杂构建系统。
 
-这些限制是刻意的：当前目标是把可靠流程变成一个能运行、能观察、能修改的学习工具。理解它之后，再替换为 BUGSC++、ManyBugs 或真实开源仓库会更有意义。
+这些限制是刻意的：当前目标不是找到一个难倒模型的题，而是把可靠流程变成一个能运行、能观察、能复盘的学习工具。理解它之后，重点应该放在如何布置任务、如何记录证据、如何审查 Agent 的思考路径，而不是继续追求更复杂的样例。

@@ -1,0 +1,69 @@
+--- <demo-root>/project/src/safe_ops.c	2026-07-05 15:10:40
++++ <demo-root>/.work/agent-reliable-flow-2/src/safe_ops.c	2026-07-08 23:36:26
+@@ -8,7 +8,7 @@
+         return 0;
+     }
+     if (value > 100) {
+-        return 99; /* BUG: upper bound should be 100. */
++        return 100;
+     }
+     return value;
+ }
+@@ -17,7 +17,13 @@
+     if (length > capacity) {
+         return false;
+     }
+-    memcpy(dst, src, length + 1); /* BUG: binary frames have no terminator. */
++    if (length == 0) {
++        return true;
++    }
++    if (dst == NULL || src == NULL) {
++        return false;
++    }
++    memcpy(dst, src, length);
+     return true;
+ }
+
+@@ -26,7 +32,14 @@
+     if (result == NULL) {
+         return false;
+     }
+-    *result = count * element_size + header_size; /* BUG: arithmetic may wrap. */
++    if (count != 0 && element_size > SIZE_MAX / count) {
++        return false;
++    }
++    size_t payload_size = count * element_size;
++    if (header_size > SIZE_MAX - payload_size) {
++        return false;
++    }
++    *result = payload_size + header_size;
+     return true;
+ }
+
+@@ -39,9 +52,10 @@
+     while (*link != NULL) {
+         CacheNode *current = *link;
+         if (current->key == key) {
++            int value = current->value;
+             *link = current->next;
+             free(current);
+-            *removed_value = current->value; /* BUG: use after free. */
++            *removed_value = value;
+             return true;
+         }
+         link = &current->next;
+@@ -50,10 +64,11 @@
+ }
+
+ size_t count_byte(const uint8_t *data, size_t length, uint8_t needle) {
+-    (void)length;
+     size_t count = 0;
+-    size_t text_length = strlen((const char *)data); /* BUG: input is binary. */
+-    for (size_t i = 0; i < text_length; ++i) {
++    if (length != 0 && data == NULL) {
++        return 0;
++    }
++    for (size_t i = 0; i < length; ++i) {
+         if (data[i] == needle) {
+             ++count;
+         }

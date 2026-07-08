@@ -1,13 +1,13 @@
 =================================================================
-==36941==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x00016f706b64 at pc 0x000100b96b88 bp 0x00016f706200 sp 0x00016f706250
-READ of size 5 at 0x00016f706b64 thread T0
-    #0 0x000100b96b84  (/opt/homebrew/Cellar/gcc/16.1.0/lib/gcc/current/libasan.8.dylib:arm64+0x4ab84)
-    #1 0x0001006f88ec  (<demo-root>/.work/strategy-a-one-shot/sanitizer_tests:arm64+0x1000008ec)
-    #2 0x0001006f9068  (<demo-root>/.work/strategy-a-one-shot/sanitizer_tests:arm64+0x100001068)
+==30977==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x00016dc8eb64 at pc 0x000102346b88 bp 0x00016dc8e200 sp 0x00016dc8e250
+READ of size 5 at 0x00016dc8eb64 thread T0
+    #0 0x000102346b84  (/opt/homebrew/Cellar/gcc/16.1.0/lib/gcc/current/libasan.8.dylib:arm64+0x4ab84)
+    #1 0x0001021708ec  (<demo-root>/.work/strategy-a-one-shot/sanitizer_tests:arm64+0x1000008ec)
+    #2 0x000102171068  (<demo-root>/.work/strategy-a-one-shot/sanitizer_tests:arm64+0x100001068)
     #3 0x00018f887dfc  (/usr/lib/dyld:arm64e+0x1fdfc)
 
-Address 0x00016f706b64 is located in stack of thread T0 at offset 84 in frame
-    #0 0x0001006f8dc4  (<demo-root>/.work/strategy-a-one-shot/sanitizer_tests:arm64+0x100000dc4)
+Address 0x00016dc8eb64 is located in stack of thread T0 at offset 84 in frame
+    #0 0x000102170dc4  (<demo-root>/.work/strategy-a-one-shot/sanitizer_tests:arm64+0x100000dc4)
 
   This frame has 7 object(s):
     [48, 51) 'short_buffer' (line 31)
@@ -21,17 +21,17 @@ HINT: this may be a false positive if your program uses some custom stack unwind
       (longjmp and C++ exceptions *are* supported)
 SUMMARY: AddressSanitizer: stack-buffer-overflow (<demo-root>/.work/strategy-a-one-shot/sanitizer_tests:arm64+0x1000008ec)
 Shadow bytes around the buggy address:
-  0x00016f706880: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016f706900: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016f706980: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016f706a00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016f706a80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-=>0x00016f706b00: 00 00 f1 f1 f1 f1 f1 f1 03 f2 04 f2[04]f2 05 f2
-  0x00016f706b80: f2 f2 06 f2 f2 f2 00 f2 f2 f2 00 f3 f3 f3 00 00
-  0x00016f706c00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016f706c80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016f706d00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016f706d80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016dc8e880: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016dc8e900: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016dc8e980: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016dc8ea00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016dc8ea80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x00016dc8eb00: 00 00 f1 f1 f1 f1 f1 f1 03 f2 04 f2[04]f2 05 f2
+  0x00016dc8eb80: f2 f2 06 f2 f2 f2 00 f2 f2 f2 00 f3 f3 f3 00 00
+  0x00016dc8ec00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016dc8ec80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016dc8ed00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016dc8ed80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 Shadow byte legend (one shadow byte represents 8 application bytes):
   Addressable:           00
   Partially addressable: 01 02 03 04 05 06 07
@@ -51,4 +51,4 @@ Shadow byte legend (one shadow byte represents 8 application bytes):
   ASan internal:           fe
   Left alloca redzone:     ca
   Right alloca redzone:    cb
-==36941==ABORTING
+==30977==ABORTING

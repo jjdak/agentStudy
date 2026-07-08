@@ -1,21 +1,21 @@
 HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:40: !checked_packet_size(1, SIZE_MAX, 1, &result)
 =================================================================
-==38069==ERROR: AddressSanitizer: heap-use-after-free on address 0x602000000274 at pc 0x000102e40ba0 bp 0x00016cfbea10 sp 0x00016cfbea28
+==32112==ERROR: AddressSanitizer: heap-use-after-free on address 0x602000000274 at pc 0x000104afcba0 bp 0x00016b302a10 sp 0x00016b302a28
 READ of size 4 at 0x602000000274 thread T0
-    #0 0x000102e40b9c  (<demo-root>/.work/strategy-b-public-tests/sanitizer_tests:arm64+0x100000b9c)
-    #1 0x000102e417a4  (<demo-root>/.work/strategy-b-public-tests/sanitizer_tests:arm64+0x1000017a4)
+    #0 0x000104afcb9c  (<demo-root>/.work/strategy-b-public-tests/sanitizer_tests:arm64+0x100000b9c)
+    #1 0x000104afd7a4  (<demo-root>/.work/strategy-b-public-tests/sanitizer_tests:arm64+0x1000017a4)
     #2 0x00018f887dfc  (/usr/lib/dyld:arm64e+0x1fdfc)
 
 0x602000000274 is located 4 bytes inside of 16-byte region [0x602000000270,0x602000000280)
 freed by thread T0 here:
-    #0 0x000103258448  (/opt/homebrew/Cellar/gcc/16.1.0/lib/gcc/current/libasan.8.dylib:arm64+0x4c448)
-    #1 0x000102e40ad8  (<demo-root>/.work/strategy-b-public-tests/sanitizer_tests:arm64+0x100000ad8)
-    #2 0x000102e417a4  (<demo-root>/.work/strategy-b-public-tests/sanitizer_tests:arm64+0x1000017a4)
+    #0 0x000104da4448  (/opt/homebrew/Cellar/gcc/16.1.0/lib/gcc/current/libasan.8.dylib:arm64+0x4c448)
+    #1 0x000104afcad8  (<demo-root>/.work/strategy-b-public-tests/sanitizer_tests:arm64+0x100000ad8)
+    #2 0x000104afd7a4  (<demo-root>/.work/strategy-b-public-tests/sanitizer_tests:arm64+0x1000017a4)
     #3 0x00018f887dfc  (/usr/lib/dyld:arm64e+0x1fdfc)
 
 previously allocated by thread T0 here:
-    #0 0x00010325858c  (/opt/homebrew/Cellar/gcc/16.1.0/lib/gcc/current/libasan.8.dylib:arm64+0x4c58c)
-    #1 0x000102e41634  (<demo-root>/.work/strategy-b-public-tests/sanitizer_tests:arm64+0x100001634)
+    #0 0x000104da458c  (/opt/homebrew/Cellar/gcc/16.1.0/lib/gcc/current/libasan.8.dylib:arm64+0x4c58c)
+    #1 0x000104afd634  (<demo-root>/.work/strategy-b-public-tests/sanitizer_tests:arm64+0x100001634)
     #2 0x00018f887dfc  (/usr/lib/dyld:arm64e+0x1fdfc)
 
 SUMMARY: AddressSanitizer: heap-use-after-free (<demo-root>/.work/strategy-b-public-tests/sanitizer_tests:arm64+0x100000b9c)
@@ -50,4 +50,4 @@ Shadow byte legend (one shadow byte represents 8 application bytes):
   ASan internal:           fe
   Left alloca redzone:     ca
   Right alloca redzone:    cb
-==38069==ABORTING
+==32112==ABORTING

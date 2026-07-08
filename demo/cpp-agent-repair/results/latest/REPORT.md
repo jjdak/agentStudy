@@ -5,6 +5,12 @@
 | 候选版本 | 范围 | GCC | Clang | 公开测试 | 静态分析 | 隐藏测试 | ASan/UBSan | fuzz-smoke | 最终接受 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | `buggy` | PASS | FAIL | PASS | FAIL | PASS | FAIL | FAIL | FAIL | FAIL |
+| `agent-one-shot-1` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| `agent-one-shot-2` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| `agent-public-test-loop-1` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| `agent-public-test-loop-2` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| `agent-reliable-flow-1` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
+| `agent-reliable-flow-2` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |
 | `strategy-a-one-shot` | PASS | FAIL | PASS | PASS | PASS | FAIL | FAIL | FAIL | FAIL |
 | `strategy-b-public-tests` | PASS | FAIL | PASS | PASS | PASS | FAIL | FAIL | FAIL | FAIL |
 | `strategy-c-reliable` | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS | PASS |

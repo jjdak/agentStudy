@@ -130,9 +130,10 @@ verify_candidate() {
 }
 
 verify_candidate buggy ""
-verify_candidate strategy-a-one-shot "$ROOT/candidates/strategy-a-one-shot"
-verify_candidate strategy-b-public-tests "$ROOT/candidates/strategy-b-public-tests"
-verify_candidate strategy-c-reliable "$ROOT/candidates/strategy-c-reliable"
+
+while IFS= read -r candidate_dir; do
+    verify_candidate "$(basename "$candidate_dir")" "$candidate_dir"
+done < <(find "$ROOT/candidates" -mindepth 1 -maxdepth 1 -type d | LC_ALL=C sort)
 
 # Remove the local workspace path before reports are committed or shared.
 while IFS= read -r log_file; do

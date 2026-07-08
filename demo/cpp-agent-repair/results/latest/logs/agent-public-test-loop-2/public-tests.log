@@ -1,0 +1,8 @@
+Internal ctest changing into directory: <demo-root>/.work/agent-public-test-loop-2/build-clang
+Test project <demo-root>/.work/agent-public-test-loop-2/build-clang
+    Start 1: public_tests
+1/1 Test #1: public_tests .....................   Passed    0.15 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.15 sec

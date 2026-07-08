@@ -1,14 +1,14 @@
 HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:20: clamp_percent(101) == 100
 =================================================================
-==35808==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x00016d8c2b84 at pc 0x000102a06b88 bp 0x00016d8c2220 sp 0x00016d8c2270
-READ of size 5 at 0x00016d8c2b84 thread T0
-    #0 0x000102a06b84  (/opt/homebrew/Cellar/gcc/16.1.0/lib/gcc/current/libasan.8.dylib:arm64+0x4ab84)
-    #1 0x00010253c8f4  (<demo-root>/.work/buggy/sanitizer_tests:arm64+0x1000008f4)
-    #2 0x00010253d070  (<demo-root>/.work/buggy/sanitizer_tests:arm64+0x100001070)
+==22796==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x00016b4feb84 at pc 0x000104bc2b88 bp 0x00016b4fe220 sp 0x00016b4fe270
+READ of size 5 at 0x00016b4feb84 thread T0
+    #0 0x000104bc2b84  (/opt/homebrew/Cellar/gcc/16.1.0/lib/gcc/current/libasan.8.dylib:arm64+0x4ab84)
+    #1 0x0001049008f4  (<demo-root>/.work/buggy/sanitizer_tests:arm64+0x1000008f4)
+    #2 0x000104901070  (<demo-root>/.work/buggy/sanitizer_tests:arm64+0x100001070)
     #3 0x00018f887dfc  (/usr/lib/dyld:arm64e+0x1fdfc)
 
-Address 0x00016d8c2b84 is located in stack of thread T0 at offset 84 in frame
-    #0 0x00010253cdcc  (<demo-root>/.work/buggy/sanitizer_tests:arm64+0x100000dcc)
+Address 0x00016b4feb84 is located in stack of thread T0 at offset 84 in frame
+    #0 0x000104900dcc  (<demo-root>/.work/buggy/sanitizer_tests:arm64+0x100000dcc)
 
   This frame has 7 object(s):
     [48, 51) 'short_buffer' (line 31)
@@ -22,17 +22,17 @@ HINT: this may be a false positive if your program uses some custom stack unwind
       (longjmp and C++ exceptions *are* supported)
 SUMMARY: AddressSanitizer: stack-buffer-overflow (<demo-root>/.work/buggy/sanitizer_tests:arm64+0x1000008f4)
 Shadow bytes around the buggy address:
-  0x00016d8c2900: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016d8c2980: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016d8c2a00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016d8c2a80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016d8c2b00: 00 00 00 00 00 00 f1 f1 f1 f1 f1 f1 03 f2 04 f2
-=>0x00016d8c2b80:[04]f2 05 f2 f2 f2 06 f2 f2 f2 00 f2 f2 f2 00 f3
-  0x00016d8c2c00: f3 f3 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016d8c2c80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016d8c2d00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016d8c2d80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-  0x00016d8c2e00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016b4fe900: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016b4fe980: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016b4fea00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016b4fea80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016b4feb00: 00 00 00 00 00 00 f1 f1 f1 f1 f1 f1 03 f2 04 f2
+=>0x00016b4feb80:[04]f2 05 f2 f2 f2 06 f2 f2 f2 00 f2 f2 f2 00 f3
+  0x00016b4fec00: f3 f3 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016b4fec80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016b4fed00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016b4fed80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x00016b4fee00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 Shadow byte legend (one shadow byte represents 8 application bytes):
   Addressable:           00
   Partially addressable: 01 02 03 04 05 06 07
@@ -52,4 +52,4 @@ Shadow byte legend (one shadow byte represents 8 application bytes):
   ASan internal:           fe
   Left alloca redzone:     ca
   Right alloca redzone:    cb
-==35808==ABORTING
+==22796==ABORTING

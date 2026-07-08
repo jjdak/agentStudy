@@ -1,5 +1,5 @@
 --- <demo-root>/project/src/safe_ops.c	2026-07-05 15:10:40
-+++ <demo-root>/.work/strategy-a-one-shot/src/safe_ops.c	2026-07-05 23:31:08
++++ <demo-root>/.work/strategy-a-one-shot/src/safe_ops.c	2026-07-08 23:36:31
 @@ -8,7 +8,7 @@
          return 0;
      }

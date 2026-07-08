@@ -1,5 +1,5 @@
 --- <demo-root>/project/src/safe_ops.c	2026-07-05 15:10:40
-+++ <demo-root>/.work/strategy-c-reliable/src/safe_ops.c	2026-07-05 23:31:19
++++ <demo-root>/.work/strategy-c-reliable/src/safe_ops.c	2026-07-08 23:36:42
 @@ -1,5 +1,6 @@
  #include "safe_ops.h"
 
