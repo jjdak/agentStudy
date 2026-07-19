@@ -22,6 +22,26 @@
 
 ## Coding Agent 与验证
 
+- OpenAI, [How OpenAI uses Codex](https://openai.com/business/guides-and-resources/how-openai-uses-codex/)：OpenAI 内部的任务粒度、Ask/Code 切换、Issue 式 Prompt、环境与 `AGENTS.md` 实践；
+- OpenAI, [Harness engineering](https://openai.com/index/harness-engineering/)：Agent-first 仓库中的文档地图、可观测性、机械门禁和持续清理；
+- OpenAI, [Prompting Codex](https://learn.chatgpt.com/docs/prompting#use-editor-context)：目标、上下文、边界、验证与会话纠偏；
+- OpenAI, [Agent approvals & security](https://learn.chatgpt.com/docs/agent-approvals-security)：Codex 的沙箱、审批和网络边界；
+- OpenAI, [Codex use cases](https://developers.openai.com/codex/use-cases)：代码理解、迁移、review、QA、CLI 和评分循环的官方演示入口；
+- Anthropic, [Claude Code best practices](https://code.claude.com/docs/en/best-practices)：验证、Explore-Plan-Code、上下文管理、`CLAUDE.md` 与新会话 review；
+- Anthropic, [Common workflows](https://code.claude.com/docs/en/common-workflows)：计划、worktree、子 Agent 和常见任务配方；
+- Anthropic, [Run agents in parallel](https://code.claude.com/docs/en/agents)：不同并行方式的边界与代价；
+- Anthropic, [Permission modes](https://code.claude.com/docs/en/permission-modes)：Claude Code 权限模式；
+- Anthropic, [How we contain Claude](https://www.anthropic.com/engineering/how-we-contain-claude)：权限审批疲劳与外部隔离；
+- Anthropic, [Claude Code sandboxing](https://www.anthropic.com/engineering/claude-code-sandboxing)：审批疲劳与沙箱工程数据；
+- Anthropic, [Building a C compiler](https://www.anthropic.com/engineering/building-c-compiler)：并行 Agent、测试、日志、oracle、成本和限制；
+- GitHub, [anthropics/claudes-c-compiler](https://github.com/anthropics/claudes-c-compiler)：上述编译器案例的公开代码；
+- Stripe, [Can AI agents build real Stripe integrations?](https://stripe.com/blog/can-ai-agents-build-real-stripe-integrations)：完整环境、确定性 grader 和端到端验证案例；
+- GitHub, [stripe/ai](https://github.com/stripe/ai)：Stripe 的 Agent 工具、Skills 和 `benchmarks/`；
+- Boris Cherny, [Claude Code setup thread](https://x.com/bcherny/status/2007179832300581177)：创建者的个人设置经验；
+- SpaceXAI, [Grok Build is Now Open Source](https://x.ai/news/grok-build-open-source)：Grok Build 开源范围、local-first 与扩展系统；
+- GitHub, [xai-org/grok-build](https://github.com/xai-org/grok-build)：Grok Build 的 Agent 循环、规则发现、计划、权限、沙箱、会话和扩展实现；
+- SpaceXAI, [Grok Build docs](https://docs.x.ai/build/overview)：安装、headless/ACP、自定义模型和 `grok inspect`；
+- Axios, [Hackers embrace AI](https://www.axios.com/newsletters/axios-future-of-cybersecurity-9168e100-7af2-11f1-bc32-bbfb768a7518)：2026-07 Grok Build 代码上传事件的外部调查；
 - GitHub, [Responsible use of Copilot coding agent](https://docs.github.com/en/copilot/responsible-use/agents)：人工 review、测试和产品边界；
 - NIST, [Secure Software Development Framework SP 800-218](https://csrc.nist.gov/pubs/sp/800/218/final)：安全开发和软件完整性；
 - LLVM, [AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html)：内存错误动态检测；
