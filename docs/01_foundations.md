@@ -61,13 +61,13 @@ Q=XW_Q,\qquad K=XW_K,\qquad V=XW_V
 生成序列的概率可分解为：
 
 ```math
-P(x_{1:T})=\prod_{t=1}^{T}P(x_t\mid x_{<t})
+P(x_{1:T})=\prod_{t=1}^{T}P(x_t\mid x_{1:t-1})
 ```
 
 模型每一步产生 logits，经 softmax 变成下一个 token 的概率：
 
 ```math
-P(x_t=i\mid x_{<t})=
+P(x_t=i\mid x_{1:t-1})=
 \frac{\exp(z_i/\tau)}{\sum_j\exp(z_j/\tau)}
 ```
 
