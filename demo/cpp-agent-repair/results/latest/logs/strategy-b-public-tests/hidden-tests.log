@@ -1,5 +1,0 @@
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:40: !checked_packet_size(1, SIZE_MAX, 1, &result)
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:63: removed == 11
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:68: removed == 22 && first == NULL
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:73: count_byte(binary, sizeof(binary), (uint8_t)'A') == 3
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:74: count_byte(binary, sizeof(binary), 0) == 2

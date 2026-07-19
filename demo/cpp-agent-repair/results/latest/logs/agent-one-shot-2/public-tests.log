@@ -1,8 +1,0 @@
-Internal ctest changing into directory: <demo-root>/.work/agent-one-shot-2/build-clang
-Test project <demo-root>/.work/agent-one-shot-2/build-clang
-    Start 1: public_tests
-1/1 Test #1: public_tests .....................   Passed    0.19 sec
-
-100% tests passed, 0 tests failed out of 1
-
-Total Test time (real) =   0.20 sec

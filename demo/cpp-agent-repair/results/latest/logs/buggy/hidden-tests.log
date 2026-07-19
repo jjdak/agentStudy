@@ -1,8 +1,0 @@
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:20: clamp_percent(101) == 100
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:29: exact[4] == 0xA5
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:39: !checked_packet_size(SIZE_MAX, 2, 0, &result)
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:40: !checked_packet_size(1, SIZE_MAX, 1, &result)
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:63: removed == 11
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:68: removed == 22 && first == NULL
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:73: count_byte(binary, sizeof(binary), (uint8_t)'A') == 3
-HIDDEN FAIL <demo-root>/oracle/hidden_tests.c:74: count_byte(binary, sizeof(binary), 0) == 2
