@@ -43,8 +43,8 @@ Q=XW_Q,\qquad K=XW_K,\qquad V=XW_V
 ```
 
 ```math
-\operatorname{Attention}(Q,K,V)
-=\operatorname{softmax}\left(\frac{QK^T}{\sqrt{d_k}}+M\right)V
+\mathrm{Attention}(Q,K,V)
+=\mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_k}}+M\right)V
 ```
 
 其中：
