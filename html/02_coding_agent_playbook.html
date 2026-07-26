@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="把 Coding Agent 作为可观察、可纠偏、可验收的工程系统使用。">
+  <title>02. Coding Agent 实战手册 · Agent Study</title>
+  <link rel="stylesheet" href="assets/style.css?v=20260726-1">
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+      options: { skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script defer src="assets/app.js?v=20260726-1"></script>
+</head>
+<body data-page="02_coding_agent_playbook.html">
+  <div class="reading-progress" aria-hidden="true"><span></span></div>
+  <header class="mobile-header">
+    <a class="brand compact" href="index.html">Agent Study</a>
+    <div class="mobile-actions">
+      <button class="icon-button theme-toggle" type="button" aria-label="切换颜色主题">◐</button>
+      <button class="icon-button nav-toggle" type="button" aria-label="打开目录">☰</button>
+    </div>
+  </header>
+  <div class="site-layout">
+    <aside class="sidebar">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">A</span>
+        <span><strong>Agent Study</strong><small>个人学习手册</small></span>
+      </a>
+      <nav class="chapter-nav" aria-label="章节">
+        <a class="chapter-link" href="01_foundations.html">
+        <span class="chapter-number">01</span>
+        <span>01. LLM 幻觉与 Agent：软件工程师需要的原理</span>
+      </a>
+<a class="chapter-link is-active" href="02_coding_agent_playbook.html">
+        <span class="chapter-number">02</span>
+        <span>02. Coding Agent 实战手册</span>
+      </a>
+<a class="chapter-link" href="03_personal_practice.html">
+        <span class="chapter-number">03</span>
+        <span>03. 个人实践：模板、检查清单与标准任务</span>
+      </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="theme-button theme-toggle" type="button">切换深浅主题</button>
+        <a href="https://github.com/jjdak/agentStudy" target="_blank" rel="noreferrer">查看 GitHub 源码 ↗</a>
+      </div>
+    </aside>
+    <main class="document-main">
+      <article class="document">
+        <h1 id="02-coding-agent-实战手册">02. Coding Agent 实战手册<a class="heading-anchor" href="#02-coding-agent-实战手册" aria-label="链接到本节">#</a></h1>
+<blockquote><p>学习目标：不把 Coding Agent 当作“更会聊天的代码生成器”，而是学会准备仓库、选择工作模式、持续纠偏，并用可执行证据验收结果。建议阅读 60～90 分钟。</p></blockquote>
+<p>本文最后核对于 <strong>2026-07-19</strong>。Codex、Claude Code 和 Grok Build 更新很快，涉及命令、权限模式和产品能力时，应再次打开对应官方页面确认。</p>
+<h2 id="1-先看结论效果不只由-prompt-决定">1. 先看结论：效果不只由 Prompt 决定<a class="heading-anchor" href="#1-先看结论效果不只由-prompt-决定" aria-label="链接到本节">#</a></h2>
+<p>把 Prompt 写得更长，并不等于 Agent 更可靠。OpenAI、Anthropic 和 SpaceXAI 的当前资料，以及 OpenAI、Stripe、Anthropic 工程人员公开的实践，反复指向四个更重要的条件：</p>
+<ol>
+<li><strong>环境可运行</strong>：Agent 能使用正确的构建命令、依赖和工具；</li>
+<li><strong>仓库可理解</strong>：入口、约定和架构资料容易找到；</li>
+<li><strong>任务可验证</strong>：Agent 能运行测试、构建或可复现检查；</li>
+<li><strong>边界可强制</strong>：文件、网络、凭证和外部操作由沙箱与权限控制，而不只写在 Prompt 中。</li>
+</ol>
+<p>可以把一次任务的实际效果近似理解为：</p>
+<div class="code-block"><button class="copy-code" type="button">复制</button><pre><code class="language-text">任务效果 ≈ 模型能力 × 环境质量 × 上下文质量 × 验证质量 × 人的纠偏</code></pre></div>
+<p>任何一项接近零，换一个“神奇 Prompt”通常也救不回来。</p>
+<p>为避免把不同强度的资料混在一起，本文使用四种标签：</p>
+<ul>
+<li><strong>[官方]</strong>：产品官方文档或官方工程文章；</li>
+<li><strong>[工程案例]</strong>：公开、可追溯的真实项目经验，但不代表普遍效果；</li>
+<li><strong>[个人经验]</strong>：从业者公开分享，适合作为线索，不应当成实验结论；</li>
+<li><strong>[外部调查]</strong>：媒体或安全研究者的调查，需要与源码、厂商声明和自己的测试交叉验证；</li>
+<li><strong>[本文归纳]</strong>：根据多项来源整理出的操作建议，需要在自己的任务上验证。</li>
+</ul>
+<h2 id="2-不要从万能模板开始先选择工作模式">2. 不要从万能模板开始，先选择工作模式<a class="heading-anchor" href="#2-不要从万能模板开始先选择工作模式" aria-label="链接到本节">#</a></h2>
+<p>真实使用不是把所有任务都塞进同一个“先分析、再规划、再实现”的大纲。应根据不确定性切换模式。</p>
+<div class="table-wrap"><table><thead><tr>
+<th>当前任务</th>
+<th>合适的起点</th>
+<th>何时进入修改</th>
+</tr></thead><tbody>
+<tr>
+<td>了解陌生仓库或调用链</td>
+<td>Ask、只读调查</td>
+<td>形成源码可核对的地图后</td>
+</tr>
+<tr>
+<td>多文件修改，方案不确定</td>
+<td>Plan</td>
+<td>计划覆盖约束、风险和验证后</td>
+</tr>
+<tr>
+<td>小而清楚的局部修改</td>
+<td>直接实现</td>
+<td>立即修改并运行针对性检查</td>
+</tr>
+<tr>
+<td>未知原因的 Bug</td>
+<td>只读复现和诊断</td>
+<td>找到可证伪的候选根因后</td>
+</tr>
+<tr>
+<td>审查已有补丁</td>
+<td>新会话或独立 reviewer</td>
+<td>通常不再修改，先报告问题</td>
+</tr>
+<tr>
+<td>后台长任务</td>
+<td>先定义状态文件和完成检查</td>
+<td>有沙箱、恢复点和自动验证后</td>
+</tr>
+</tbody></table></div>
+<p><strong>[官方]</strong> OpenAI 内部使用 Codex 时，大改动通常先在 Ask Mode 形成实现计划，再进入 Code Mode；但 Claude Code 官方也明确提醒，Plan 会增加开销，简单修改可以跳过。两者并不矛盾：<strong>是否规划取决于方案的不确定性，不取决于任务看起来是否“高级”</strong>。</p>
+<p>一个实用判断是：如果你暂时说不清会改哪些模块、有哪些兼容性风险、如何验收，就先调查或计划；如果这些都清楚，直接实现更高效。</p>
+<h2 id="3-先把仓库变成-agent-容易工作的环境">3. 先把仓库变成 Agent 容易工作的环境<a class="heading-anchor" href="#3-先把仓库变成-agent-容易工作的环境" aria-label="链接到本节">#</a></h2>
+<h3 id="31-仓库说明应该是地图不是百科全书">3.1 仓库说明应该是地图，不是百科全书<a class="heading-anchor" href="#31-仓库说明应该是地图不是百科全书" aria-label="链接到本节">#</a></h3>
+<p>Codex 会读取 <code>AGENTS.md</code>，Claude Code 会读取 <code>CLAUDE.md</code>。它们最适合保存 Agent <strong>无法稳定从代码推断</strong>、而且会在多个任务中重复使用的信息：</p>
+<ul>
+<li>仓库结构和关键入口；</li>
+<li>标准构建、测试、格式化命令；</li>
+<li>项目特有的设计约束与禁区；</li>
+<li>可以模仿的参考实现；</li>
+<li>“完成”的项目级定义；</li>
+<li>更详细文档的链接。</li>
+</ul>
+<p>不要把所有架构知识、编码规范和历史决定都复制进去。Claude Code 官方建议保持 <code>CLAUDE.md</code> 简短并持续修剪；OpenAI 的 Agent-first 工程案例也报告，巨型 <code>AGENTS.md</code> 会失效，后来改为约 100 行的目录，并把仓库内结构化文档作为事实来源。</p>
+<p><strong>[官方源码]</strong> Grok Build 提供了更具体的实现参考：它从仓库根目录到当前目录分层发现 <code>AGENTS.md</code>、<code>CLAUDE.md</code> 和规则目录，越深的规则越晚进入上下文；<code>grok inspect</code> 可以列出实际加载的规则及其近似 token 数。它也会同时加载同一目录中匹配的多个文件，因此不要让 <code>AGENTS.md</code> 与 <code>CLAUDE.md</code> 各复制一份相互漂移的规则。</p>
+<p>可以让两个入口指向同一份共享说明，避免相互矛盾：</p>
+<div class="code-block"><button class="copy-code" type="button">复制</button><pre><code class="language-text">AGENTS.md
+CLAUDE.md
+docs/agent-guide.md       # 共享的构建、测试、约束和文档索引
+docs/architecture/        # 架构与模块边界
+docs/decisions/           # 重要设计决策</code></pre></div>
+<h3 id="32-给-agent-可组合的命令">3.2 给 Agent 可组合的命令<a class="heading-anchor" href="#32-给-agent-可组合的命令" aria-label="链接到本节">#</a></h3>
+<p>与其在每个 Prompt 中解释十几条命令，不如在仓库中提供稳定入口：</p>
+<div class="code-block"><button class="copy-code" type="button">复制</button><pre><code class="language-text">./tools/bootstrap          # 准备环境
+./tools/repro ISSUE-123    # 复现已知问题
+./tools/test-target parser # 运行针对性测试
+./tools/check              # 项目规定的完整检查</code></pre></div>
+<p><strong>[官方]</strong> OpenAI 的 Codex 用例专门建议为内部 API、日志源和团队脚本创建可组合 CLI。OpenAI 内部经验也指出，启动脚本、环境变量和正确依赖会显著减少 Agent 在环境问题上的失败。</p>
+<p>命令应有明确退出码，失败时输出可搜索的错误摘要，并把详细日志写入文件。这样 Agent 不必把几万行日志全部塞进上下文。</p>
+<h3 id="33-先做一次-15-分钟校准">3.3 先做一次 15 分钟校准<a class="heading-anchor" href="#33-先做一次-15-分钟校准" aria-label="链接到本节">#</a></h3>
+<p>第一次把 Agent 接入仓库时，先完成一个很小但完整的任务：</p>
+<ol>
+<li>让它只读说明构建入口和目标模块；</li>
+<li>让它运行一条标准检查命令；</li>
+<li>修复一个小问题或增加一个小测试；</li>
+<li>检查它是否读对说明、改对范围、解释对结果；</li>
+<li>把反复出现的环境问题修进脚本或仓库说明。</li>
+</ol>
+<p>校准失败时先修“Agent 的工作环境”，而不是立即堆更多指令。</p>
+<h2 id="4-把任务写成一条可执行的-github-issue">4. 把任务写成一条可执行的 GitHub Issue<a class="heading-anchor" href="#4-把任务写成一条可执行的-github-issue" aria-label="链接到本节">#</a></h2>
+<p><strong>[官方]</strong> OpenAI 内部 Codex 指南建议像写 GitHub Issue 一样写 Prompt：指出文件路径、组件名、相关 diff、文档片段或参考实现。Claude Code 官方给出的高质量 Prompt 也强调目标症状、可能区域、约束和“修好”的可观察定义。</p>
+<h3 id="41-最有用的六项">4.1 最有用的六项<a class="heading-anchor" href="#41-最有用的六项" aria-label="链接到本节">#</a></h3>
+<div class="code-block"><button class="copy-code" type="button">复制</button><pre><code class="language-text">目标：最终应出现什么可观察行为？
+现状：复现命令、输入和完整错误是什么？
+线索：相关路径、接口、文档或参考实现在哪里？
+约束：哪些 API、行为、文件或依赖不能改变？
+验证：必须运行什么命令，成功应看到什么？
+边界：哪些操作需先问我，什么情况必须停止？</code></pre></div>
+<p>弱 Prompt：</p>
+<div class="code-block"><button class="copy-code" type="button">复制</button><pre><code class="language-text">修复 parser 的问题，确保代码健壮。</code></pre></div>
+<p>较好的 Prompt：</p>
+<div class="code-block"><button class="copy-code" type="button">复制</button><pre><code class="language-text">修复 src/parser/tokenizer.cc 在读取长度超过 4096 的输入时崩溃的问题。
+
+复现：./tools/repro ISSUE-123；当前在 Clang 18 + Linux x86_64 下退出码为 1。
+先阅读 docs/parser-invariants.md，并参考 src/parser/stream_reader.cc 的边界处理。
+
+保持 Tokenizer 公共 API、错误码和正常输入性能不变；不要修改测试或增加依赖。
+先复现并定位第一次违反不变量的位置，再做最小修改。
+
+完成前运行：
+1. ./tools/test-target tokenizer
+2. ./tools/check
+
+报告实际命令、退出码、diff 和未验证项。若无法稳定复现或需要越出
+src/parser/，先停止并说明原因。</code></pre></div>
+<p>这段指令仍然没有规定具体修法。它提供的是<strong>问题空间、证据入口和验收条件</strong>。</p>
+<h3 id="42-大功能可以先让-agent-采访你">4.2 大功能可以先让 Agent 采访你<a class="heading-anchor" href="#42-大功能可以先让-agent-采访你" aria-label="链接到本节">#</a></h3>
+<p>需求含糊时，不必独自写一大段规格。Claude Code 官方建议让 Agent 使用提问工具澄清实现、界面、边界条件和权衡，生成自包含的 <code>SPEC.md</code>，然后在新会话中执行。</p>
+<p>可复制指令：</p>
+<div class="code-block"><button class="copy-code" type="button">复制</button><pre><code class="language-text">我想实现 &lt;目标&gt;，但规格还不完整。现在只做需求澄清，不修改代码。
+阅读相关源码后逐项询问会改变实现方案的问题，包括边界行为、兼容性、
+错误处理、性能和验收方式。最后生成一份自包含的 SPEC.md：明确目标、
+非目标、示例、约束、开放问题和可执行验收。不要替我猜测未确认的需求。</code></pre></div>
+<h2 id="5-执行中最重要的能力是纠偏">5. 执行中最重要的能力是纠偏<a class="heading-anchor" href="#5-执行中最重要的能力是纠偏" aria-label="链接到本节">#</a></h2>
+<h3 id="51-一个适合日常开发的循环">5.1 一个适合日常开发的循环<a class="heading-anchor" href="#51-一个适合日常开发的循环" aria-label="链接到本节">#</a></h3>
+<pre class="mermaid">flowchart LR
+    A[&quot;选择工作模式&quot;] --&gt; B[&quot;只读理解或计划&quot;]
+    B --&gt; C[&quot;在独立工作区实现&quot;]
+    C --&gt; D[&quot;运行针对性检查&quot;]
+    D --&gt; E{&quot;证据是否支持结果&quot;}
+    E --&gt;|&quot;否，有新证据&quot;| B
+    E --&gt;|&quot;否，无新证据&quot;| F[&quot;清理上下文或停止&quot;]
+    E --&gt;|&quot;是&quot;| G[&quot;新视角审查 diff&quot;]
+    G --&gt; H[&quot;运行项目级门禁&quot;]
+    H --&gt; I[&quot;人工接受并沉淀改进&quot;]</pre>
+<h3 id="52-及早打断避免错误上下文滚雪球">5.2 及早打断，避免错误上下文滚雪球<a class="heading-anchor" href="#52-及早打断避免错误上下文滚雪球" aria-label="链接到本节">#</a></h3>
+<ul>
+<li>Agent 刚走错模块时立即纠正，不要等它生成大 patch；</li>
+<li>纠正时补充一条新证据或新约束，不只是重复“再想想”；</li>
+<li>Claude Code 官方建议：连续两次纠正仍没有进展，就清理上下文，用学到的信息重写首条 Prompt；</li>
+<li>同一任务可以继续会话，不相关任务应使用新会话；</li>
+<li>长任务把目标、决定、当前状态和下一步写进仓库内状态文件，不只依赖聊天历史。</li>
+</ul>
+<p>不要用“思考文字长短”评估过程，也不需要要求模型展示私有思维过程。检查可观察产物：读过哪些文件、运行了什么、证据如何改变假设、diff 是否集中、哪些检查未运行。</p>
+<h3 id="53-让-agent-说明事实假设和未知">5.3 让 Agent 说明事实、假设和未知<a class="heading-anchor" href="#53-让-agent-说明事实假设和未知" aria-label="链接到本节">#</a></h3>
+<p>诊断过程中可以要求短格式汇报：</p>
+<div class="code-block"><button class="copy-code" type="button">复制</button><pre><code class="language-text">已确认事实：&lt;源码、日志或工具直接支持&gt;
+当前假设：&lt;尚未确认的解释&gt;
+反证或缺口：&lt;什么会推翻它&gt;
+下一步最小实验：&lt;一条命令或一个观察&gt;</code></pre></div>
+<p>这比要求一篇完整“推理过程”更容易核对，也更节省上下文。</p>
+<h2 id="6-给-agent-一面镜子可执行验证">6. 给 Agent 一面镜子：可执行验证<a class="heading-anchor" href="#6-给-agent-一面镜子可执行验证" aria-label="链接到本节">#</a></h2>
+<p>Claude Code 官方把“给 Claude 验证自己工作的方式”列为最高杠杆实践之一；OpenAI 当前 Codex 用例也把测试、review、评分循环和 UI 视觉检查作为标准工作方式。</p>
+<h3 id="61-验证必须与主张对应">6.1 验证必须与主张对应<a class="heading-anchor" href="#61-验证必须与主张对应" aria-label="链接到本节">#</a></h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Agent 的主张</th>
+<th>至少需要的证据</th>
+</tr></thead><tbody>
+<tr>
+<td>能编译</td>
+<td>指定工具链的构建命令和退出码</td>
+</tr>
+<tr>
+<td>已修复 Bug</td>
+<td>原始复现 + 旧版失败新版通过的定向测试</td>
+</tr>
+<tr>
+<td>没有破坏旧行为</td>
+<td>项目规定的回归检查</td>
+</tr>
+<tr>
+<td>C/C++ 内存问题已修复</td>
+<td>覆盖目标路径的 ASan、UBSan 或 LSan 运行</td>
+</tr>
+<tr>
+<td>UI 已正确实现</td>
+<td>自动化交互或截图与预期对比</td>
+</tr>
+<tr>
+<td>符合需求</td>
+<td>逐条需求核对 + 人工领域判断</td>
+</tr>
+</tbody></table></div>
+<p>测试通过不等于所有主张都成立。编译器不能证明业务语义，静态分析不能证明所有运行路径，另一个 Agent 的赞同也不是独立验收。</p>
+<h3 id="62-根因在-a报错在-b-时">6.2 根因在 A、报错在 B 时<a class="heading-anchor" href="#62-根因在-a报错在-b-时" aria-label="链接到本节">#</a></h3>
+<p>C/C++ 常见的传播链是：</p>
+<div class="code-block"><button class="copy-code" type="button">复制</button><pre><code class="language-text">A：越界、错误释放或未初始化写入
+        ↓
+对象或内存状态已经非法，但程序继续运行
+        ↓
+B：allocator、析构函数或普通读取处检测到问题</code></pre></div>
+<p>如果 Agent 只在 B 处增加 <code>if</code>、吞掉错误、跳过 <code>free()</code> 或关闭 Sanitizer，现象可能消失，但错误仍然存在。</p>
+<p>可复制指令：</p>
+<div class="code-block"><button class="copy-code" type="button">复制</button><pre><code class="language-text">当前不知道根因。先只读复现和诊断，不修改源码。
+
+寻找第一次状态违反不变量的位置，不要默认最后一条堆栈就是根因。
+对候选根因给出：支持证据、反证、一个可证伪实验，以及从错误产生位置
+到检测位置的传播链。证据不足就标记未知。
+
+确认后只修复第一次破坏不变量的位置。禁止通过删除检查、吞错、跳过释放、
+关闭 Sanitizer 或增加 suppression 获得通过。完成时给出原始复现、根因定向
+测试、回归检查、Sanitizer 结果和完整 diff。</code></pre></div>
+<p>判断是否真正修复 A：</p>
+<ol>
+<li>原始复现由失败变为通过；</li>
+<li>测试直接触发 A 处的不变量，而非只检查 B 不再报错；</li>
+<li>B 原有检查、失败语义和资源清理没有被弱化；</li>
+<li>适用的 Sanitizer 与回归测试通过；</li>
+<li>临时撤销关键修复后，定向测试重新失败。</li>
+</ol>
+<p>第 5 项是反事实检查，用来确认测试真的对关键修复敏感。</p>
+<h3 id="63-写代码和审查代码使用不同视角">6.3 写代码和审查代码使用不同视角<a class="heading-anchor" href="#63-写代码和审查代码使用不同视角" aria-label="链接到本节">#</a></h3>
+<p>Claude Code 官方建议对重要修改使用新的 writer/reviewer 上下文：一个会话实现，另一个新会话根据需求和 diff 找缺口。这样可以减少 reviewer 继承实现者假设的概率。</p>
+<p>Reviewer 的重点应是正确性、边界和需求遗漏，而不是为了显示工作量提出样式重构。最终门禁仍应由确定性工具和人工决定。</p>
+<p>可复制审查指令：</p>
+<div class="code-block"><button class="copy-code" type="button">复制</button><pre><code class="language-text">只审查这个 patch，不修改代码。根据 &lt;需求/issue&gt; 检查正确性、回归、安全性
+和越界修改。优先寻找能用具体输入或源码路径证明的问题；不要提出纯样式改进。
+区分“已证实缺陷”“需要验证的风险”和“非阻塞建议”，并给出最小复现方式。</code></pre></div>
+<h2 id="7-权限要写进运行环境而不只写进-prompt">7. 权限要写进运行环境，而不只写进 Prompt<a class="heading-anchor" href="#7-权限要写进运行环境而不只写进-prompt" aria-label="链接到本节">#</a></h2>
+<h3 id="71-沙箱与审批是两件事">7.1 沙箱与审批是两件事<a class="heading-anchor" href="#71-沙箱与审批是两件事" aria-label="链接到本节">#</a></h3>
+<p><strong>[官方]</strong> Codex 文档把它们分成两层：沙箱决定技术上能访问哪些文件和网络，审批策略决定何时暂停请求许可。Claude Code 的权限模式同样在模型会话外设置；仅在聊天中说“不要联网”不是等价控制。</p>
+<p>个人学习和公开仓库练习可从下面的默认值开始：</p>
+<div class="table-wrap"><table><thead><tr>
+<th>资源</th>
+<th>推荐默认值</th>
+</tr></thead><tbody>
+<tr>
+<td>文件</td>
+<td>只写当前工作区或独立 worktree</td>
+</tr>
+<tr>
+<td>Git</td>
+<td>可读 <code>status</code>、<code>diff</code>，不自动 commit 或 push</td>
+</tr>
+<tr>
+<td>网络</td>
+<td>默认关闭；确有需要时使用域名 allowlist</td>
+</tr>
+<tr>
+<td>凭证</td>
+<td>不提供；需要时使用测试环境的短期最小权限凭证</td>
+</tr>
+<tr>
+<td>测试与评分</td>
+<td>Agent 可运行，不可弱化；独立评分器不可写</td>
+</tr>
+<tr>
+<td>外部系统</td>
+<td>发送、发布、部署、数据库写入前人工批准</td>
+</tr>
+</tbody></table></div>
+<p>Codex 官方文档显示，本地默认使用操作系统级沙箱，通常将写权限限制在工作区并关闭网络；Claude Code 官方只建议在隔离容器或虚拟机中使用绕过权限模式。</p>
+<h3 id="72-为什么不能靠不断点击允许">7.2 为什么不能靠不断点击“允许”<a class="heading-anchor" href="#72-为什么不能靠不断点击允许" aria-label="链接到本节">#</a></h3>
+<p><strong>[工程案例]</strong> Anthropic 在<a href="https://www.anthropic.com/engineering/how-we-contain-claude" target="_blank" rel="noreferrer">权限隔离复盘</a>中报告，内部遥测里约 93% 的权限请求被接受，说明用户容易形成审批疲劳；其<a href="https://www.anthropic.com/engineering/claude-code-sandboxing" target="_blank" rel="noreferrer">沙箱方案</a>在内部把权限提示减少了 84%。这些数字只描述 Anthropic 的环境，但支持一个通用设计原则：<strong>高频、低风险动作由可靠的沙箱策略预先约束，高风险越界动作才请求人批准</strong>。</p>
+<p>对以后要迁移到内网 Linux 的练习，建议固定：</p>
+<ul>
+<li>Linux 发行版和架构；</li>
+<li>编译器、依赖和容器镜像 digest；</li>
+<li>工作区可写路径；</li>
+<li>网络策略和可用工具；</li>
+<li>统一的构建与验收命令。</li>
+</ul>
+<p>这既提高可复现性，也便于比较内外网 Agent 的差异。</p>
+<h2 id="8-大型仓库的长任务先建立外部状态再考虑并行">8. 大型仓库的长任务：先建立外部状态，再考虑并行<a class="heading-anchor" href="#8-大型仓库的长任务先建立外部状态再考虑并行" aria-label="链接到本节">#</a></h2>
+<p>局部 Bug 可以依靠一个会话内的调用链和测试闭环；跨模块功能常常会超过一次上下文能够稳定承载的范围。问题不只是“模型想得不够久”，而是目标、已确认事实、设计决定、未完成依赖和验证结果混在聊天记录中，压缩或新会话后容易丢失。</p>
+<h3 id="81-把长任务变成可恢复的状态机">8.1 把长任务变成可恢复的状态机<a class="heading-anchor" href="#81-把长任务变成可恢复的状态机" aria-label="链接到本节">#</a></h3>
+<p><strong>[本文归纳]</strong> 对单 Agent 长任务，至少把五类状态写入仓库内、但不进入最终 patch 的工作文件：</p>
+<div class="table-wrap"><table><thead><tr>
+<th>状态文件</th>
+<th>只记录什么</th>
+<th>更新时机</th>
+</tr></thead><tbody>
+<tr>
+<td><code>REPO_MAP.md</code></td>
+<td>入口、调用链、所有权、构建和测试位置</td>
+<td>发现原判断错误或新模块时</td>
+</tr>
+<tr>
+<td><code>SPEC.md</code></td>
+<td>目标、非目标、边界行为和可执行验收</td>
+<td>需求澄清后，实施前冻结</td>
+</tr>
+<tr>
+<td><code>DESIGN.md</code></td>
+<td>组件改动、接口、清理、错误传播和风险</td>
+<td>方案变化时</td>
+</tr>
+<tr>
+<td><code>TASKS.md</code></td>
+<td>有依赖关系的小工作包及完成证据</td>
+<td>每个工作包开始/完成时</td>
+</tr>
+<tr>
+<td><code>STATUS.md</code></td>
+<td>已确认事实、决定、当前工作、失败尝试和下一步</td>
+<td>上下文压缩、暂停或交接前</td>
+</tr>
+</tbody></table></div>
+<p>推荐的单 Agent 流程不是“一次生成完整计划后盲目执行”，而是：</p>
+<div class="code-block"><button class="copy-code" type="button">复制</button><pre><code class="language-text">仓库地图 → 可核对规格 → 跨模块设计 → 依赖化工作包
+    ↑                                      ↓
+    └──── 新证据修正状态 ← 小步实现与定向验证
+                                           ↓
+                         干净环境集成 + 独立评分</code></pre></div>
+<p>每个工作包应有一个可观察完成条件，例如“新的解析数据结构拥有明确清理入口，目标单元测试和 ASan 路径通过”，而不是“实现变量模块”。<code>STATUS.md</code> 只保存接手所需的短事实，不复制长日志；命令输出留在日志文件，并记录路径和退出码。</p>
+<p>遇到以下情况应停下来重规划，而不是让 Agent 继续堆 patch：</p>
+<ul>
+<li>规格中的开放问题会改变接口或兼容行为；</li>
+<li>设计发现新的跨模块依赖，原工作包顺序不再成立；</li>
+<li>连续两轮没有新增证据，或重复搜索同一批文件；</li>
+<li>局部测试通过，但从干净目录无法构建或功能未接入最终入口；</li>
+<li>当前上下文已经无法准确复述约束、已完成项和未验证项。</li>
+</ul>
+<p>本仓库的 <a href="https://github.com/jjdak/agentStudy/blob/main/lab/curl-variable-long-task/README.md" target="_blank" rel="noreferrer">curl 长任务实验室</a> 把这套方法做成可重复环境：同一修复前源码、固定工具链、五个外部状态文件、全新 run、独立黑盒和隐藏测试、Sanitizer 与回归门禁。它适合观察一个 Agent 多会话工作的完整度，不把思考文字长度当成指标。</p>
+<h3 id="82-并行不是默认答案">8.2 并行不是默认答案<a class="heading-anchor" href="#82-并行不是默认答案" aria-label="链接到本节">#</a></h3>
+<p>选择并行方式前先看任务依赖：</p>
+<div class="table-wrap"><table><thead><tr>
+<th>情况</th>
+<th>做法</th>
+<th>主要代价</th>
+</tr></thead><tbody>
+<tr>
+<td>阶段共享大量上下文、彼此依赖</td>
+<td>一个主会话顺序完成</td>
+<td>会话变长</td>
+</tr>
+<tr>
+<td>独立且输出很啰嗦的调查或 review</td>
+<td>子 Agent 隔离上下文</td>
+<td>额外 token 和汇总成本</td>
+</tr>
+<tr>
+<td>多个互不相交的代码任务</td>
+<td>多个 worktree 并行</td>
+<td>合并冲突和环境成本</td>
+</tr>
+<tr>
+<td>大型、可分解且需要动态协调的项目</td>
+<td>Agent team 或编排工作流</td>
+<td>控制面复杂，费用高</td>
+</tr>
+</tbody></table></div>
+<p>Claude Code 官方建议并行改代码时使用 Git worktree，并先用 2～3 个样本验证 Prompt 和流程，再批量扩展。多个会话会成倍增加 token，并且只有真正独立的任务才会缩短墙钟时间。</p>
+<p><strong>[工程案例]</strong> Nicholas Carlini 使用 16 个 Claude Agent 构建 C 编译器时发现，可分解的架构、独立测试和文件边界适合并行；但让所有 Agent 同时解决同一个 Linux 内核阻塞问题没有帮助。并行增加的是搜索宽度，不会自动突破同一个串行瓶颈。</p>
+<h2 id="9-六个真实案例告诉了我们什么">9. 六个真实案例告诉了我们什么<a class="heading-anchor" href="#9-六个真实案例告诉了我们什么" aria-label="链接到本节">#</a></h2>
+<h3 id="91-openai-内部像-issue-一样交任务">9.1 OpenAI 内部：像 Issue 一样交任务<a class="heading-anchor" href="#91-openai-内部像-issue-一样交任务" aria-label="链接到本节">#</a></h3>
+<p><strong>来源类型：官方经验汇总。</strong> OpenAI 工程团队公开建议：</p>
+<ul>
+<li>把任务缩小到约一小时、几百行代码的量级；</li>
+<li>大改动先 Ask/Plan，再 Code；</li>
+<li>给出路径、组件、diff、文档和参考实现；</li>
+<li>改善启动脚本和开发环境；</li>
+<li>用 <code>AGENTS.md</code> 保存无法从代码推断的项目知识；</li>
+<li>需要比较多个方案时使用 Best-of-N 候选，而不是接受第一个结果。</li>
+</ul>
+<p>这里的“一小时、几百行”是他们的经验尺度，不是硬性标准。应根据仓库测试速度、模块耦合和人的复核能力调整。</p>
+<h3 id="92-openai-agent-first-项目修地图和工具而不是只催模型">9.2 OpenAI Agent-first 项目：修地图和工具，而不是只催模型<a class="heading-anchor" href="#92-openai-agent-first-项目修地图和工具而不是只催模型" aria-label="链接到本节">#</a></h3>
+<p><strong>来源类型：工程案例。</strong> Ryan Lopopolo 报告，一个小团队在约五个月内让 Agent 生成约百万行代码和约 1500 个 PR。案例最有价值的不是产出数字，而是工程条件：</p>
+<ul>
+<li>人负责目标、约束和反馈，Agent 执行；</li>
+<li>失败经常暴露的是环境、工具或文档能力缺口；</li>
+<li>先建设小而可验证的基础能力，再向上组合；</li>
+<li>给 Agent 每个 worktree 内可访问的 UI、日志和指标；</li>
+<li><code>AGENTS.md</code> 只做目录，计划与文档成为版本化工件；</li>
+<li>用 linters、CI 和结构测试机械执行不变量；</li>
+<li>预留持续清理，避免 Agent 复制仓库中已有的不一致模式。</li>
+</ul>
+<p>文章也明确提醒：没有类似的测试、验证、review 和恢复投入，不应直接外推其开发速度。</p>
+<h3 id="93-anthropic-c-编译器验证器决定自主性的上限">9.3 Anthropic C 编译器：验证器决定自主性的上限<a class="heading-anchor" href="#93-anthropic-c-编译器验证器决定自主性的上限" aria-label="链接到本节">#</a></h3>
+<p><strong>来源类型：工程案例 + 公开仓库。</strong> Nicholas Carlini 让 16 个并行 Agent、约 2000 个会话构建了约 10 万行的 C 编译器，报告成本约 2 万美元。项目同时公开了<a href="https://github.com/anthropics/claudes-c-compiler" target="_blank" rel="noreferrer">代码仓库</a>。</p>
+<p>可迁移的做法包括：</p>
+<ul>
+<li>所有 Agent 在容器中运行，不直接使用宿主环境；</li>
+<li>高质量测试和已知正确的 GCC 作为 oracle；</li>
+<li>回归出现后持续收紧 CI；</li>
+<li>控制台只保留短摘要，详细日志写文件，错误便于搜索；</li>
+<li>使用快速、确定性的样本测试，避免 Agent 在慢测试上耗尽时间；</li>
+<li>用 delta debugging 缩小失败输入；</li>
+<li>使用 README 和进度文件让新会话恢复状态。</li>
+</ul>
+<p>局限同样重要：仓库 README 明确说该编译器未被人工验证、不建议实际使用；文章还报告了效率低、代码质量低于专家、fallback 和“为了过测试”的行为。这正说明<strong>“测试变绿”是必要条件，不是高风险代码的充分条件</strong>。</p>
+<h3 id="94-stripe-agent-基准真实验收必须覆盖端到端行为">9.4 Stripe Agent 基准：真实验收必须覆盖端到端行为<a class="heading-anchor" href="#94-stripe-agent-基准真实验收必须覆盖端到端行为" aria-label="链接到本节">#</a></h3>
+<p><strong>来源类型：大厂工程案例 + 开源仓库。</strong> Stripe 的 2026 年基准构建了 11 个完整环境，使用固定 Agent harness，并用 API 调用、自动化 UI 测试和 Stripe 测试对象组成确定性 grader。公开结果中，有的 Agent 对无效数据得到 400 响应后就误认为接口完成；更成功的运行会先创建有效测试数据再验证。</p>
+<p>这个案例给日常开发的启发是：不要只测“某个命令运行过”，而要测用户真正关心的端到端结果。Stripe 已在 <a href="https://github.com/stripe/ai" target="_blank" rel="noreferrer"><code>stripe/ai</code></a> 仓库公开 <code>benchmarks/</code>，可以查看一个生产型 Agent eval 如何组织环境、grader 和执行框架。</p>
+<h3 id="95-claude-code-创建者不要为了显得专业而过度定制">9.5 Claude Code 创建者：不要为了显得专业而过度定制<a class="heading-anchor" href="#95-claude-code-创建者不要为了显得专业而过度定制" aria-label="链接到本节">#</a></h3>
+<p><strong>来源类型：个人经验。</strong> Claude Code 创建者 Boris Cherny 在 <a href="https://x.com/bcherny/status/2007179832300581177" target="_blank" rel="noreferrer">X 原帖</a>中说明，他自己的设置相当接近默认值，而且团队成员的使用方式差异很大，没有唯一正确的配置。</p>
+<p>这不能证明“默认配置总是最好”，但提醒我们把自定义当成对已观察问题的修复：先使用、记录摩擦，再添加规则、Skill、Hook 或 MCP；不要一次安装大量扩展，反而消耗上下文并扩大权限面。</p>
+<h3 id="96-spacexai-grok-build直接研究-agent-harness">9.6 SpaceXAI Grok Build：直接研究 Agent harness<a class="heading-anchor" href="#96-spacexai-grok-build直接研究-agent-harness" aria-label="链接到本节">#</a></h3>
+<p><strong>来源类型：官方源码 + 外部安全调查。</strong> SpaceXAI 在 2026-07-15 开源了 <a href="https://github.com/xai-org/grok-build" target="_blank" rel="noreferrer"><code>xai-org/grok-build</code></a>。这不是模型权重，而是 Rust 编写的 Coding Agent harness、终端界面和运行时。官方仓库把主要责任分成了清楚的层次：</p>
+<div class="table-wrap"><table><thead><tr>
+<th>源码区域</th>
+<th>责任</th>
+<th>对个人学习的意义</th>
+</tr></thead><tbody>
+<tr>
+<td><code>xai-grok-pager</code></td>
+<td>TUI、计划预览、diff 和交互</td>
+<td>人如何观察和纠偏 Agent</td>
+</tr>
+<tr>
+<td><code>xai-grok-shell</code></td>
+<td>Agent 循环、会话、headless/ACP 入口</td>
+<td>模型、工具和观察如何循环</td>
+</tr>
+<tr>
+<td><code>xai-grok-tools</code></td>
+<td>文件、终端、搜索等工具实现</td>
+<td>工具返回什么证据给模型</td>
+</tr>
+<tr>
+<td><code>xai-grok-workspace</code></td>
+<td>文件系统、Git、执行、checkpoint</td>
+<td>如何把修改、恢复和工作区状态外置</td>
+</tr>
+<tr>
+<td><code>xai-grok-sandbox</code></td>
+<td>文件与网络限制</td>
+<td>权限为何必须由模型外机制执行</td>
+</tr>
+<tr>
+<td>配置、Hooks、Skills、Plugins</td>
+<td>可复用规则和扩展</td>
+<td>哪些内容常驻，哪些能力按需加载</td>
+</tr>
+</tbody></table></div>
+<p>与只读产品文档相比，源码可以验证几个具体设计：</p>
+<ol>
+<li>工具授权不是一句 Prompt，而是 <code>PreToolUse hook → deny/ask/allow 规则 → 已记忆授权 → 只读自动批准 → 权限模式</code> 的管线，而且 <code>deny</code> 优先；</li>
+<li>Plan Mode 只允许写会话的 <code>plan.md</code>，其他编辑工具会被运行时拒绝，不依赖模型自觉；</li>
+<li>会话、compaction、rewind、checkpoint 和 hunk tracking 都是独立状态机制，不只存在聊天文本中；</li>
+<li>项目规则、Skills、Plugins、Hooks、MCP 和子 Agent 都有明确的发现与装载代码；</li>
+<li>可通过 <code>config.toml</code> 指向自定义模型和 <code>base_url</code>，因此可以作为内网模型的候选实验 harness。</li>
+</ol>
+<p>但这个仓库同样展示了“开源”不等于“默认安全”：</p>
+<ul>
+<li>仓库 README 说明它只是从 SpaceXAI 单体仓库定期同步的源码快照，并用 <code>SOURCE_REV</code> 记录上游版本；公开时只有很短的 Git 历史，而且不接受外部贡献，不能把它当成完整开发历史；</li>
+<li>Grok Build 的 OS 沙箱<strong>默认关闭</strong>。内置 <code>workspace</code> profile 仍允许读取系统各处并允许网络，不等于最小权限；</li>
+<li>Plan Mode 只拦截编辑工具，不检查 shell 重定向，写权限子 Agent 也不自动继承父会话的计划编辑门禁，因此 Plan Mode 不能代替只读沙箱；</li>
+<li>Linux 的子进程网络限制不覆盖进程内的模型 API、<code>web_search</code> 和 <code>web_fetch</code>；macOS 上相应的子进程断网还是 no-op；</li>
+<li>Linux 对 deny glob 的读取隔离只展开启动时已经存在的匹配文件。真正敏感路径应使用精确路径，并用容器或主机级 egress policy 再隔离一层。</li>
+</ul>
+<p><strong>[外部调查]</strong> Axios 在 2026-07-14 报道了 Grok Build 过度上传代码仓库的数据事件。当前开源快照也能看到 trace/upload 相关模块，但仅凭公开源码无法证明某个二进制版本、服务端开关或历史运行实际发送了哪些数据。因此正确结论不是“源码证明所有版本都会泄露”，而是：<strong>把云端 Coding Agent 接到内部代码前，必须测量真实网络行为，不能只阅读隐私说明或本地配置。</strong></p>
+<p>如果以后把它用于内网 Linux 模型测试，建议先做以下受控接入：</p>
+<ol>
+<li>固定公开 commit 与 <code>SOURCE_REV</code>，从源码构建，不直接使用自动更新的二进制；</li>
+<li>把 <code>base_url</code> 指向内网推理服务，关闭不需要的 Web、MCP、Plugin 和远端功能；</li>
+<li>用 <code>grok inspect</code> 保存实际加载的规则、Skills、Plugins、Hooks 和 MCP 清单；</li>
+<li>在无外网容器或虚拟机中运行，并叠加 <code>strict</code> 或自定义 deny profile；</li>
+<li>使用代理日志、DNS/连接审计或主机 egress 规则确认没有未授权外连；</li>
+<li>用同一公开任务、同一权限和同一外部评分器比较不同模型，不把 harness 差异误算为模型能力。</li>
+</ol>
+<p>这里最值得学习的不是 Grok 的默认 Prompt，而是它如何把上下文、工具、权限、恢复和扩展拆成可检查的工程组件。</p>
+<p>建议按下面的顺序阅读固定在本次核对 commit 的源码，避免只在庞大的 Rust workspace 中漫游：</p>
+<ol>
+<li><a href="https://github.com/xai-org/grok-build/blob/7cfcb20d2b50b0d18801a6c0af2e401c0e060894/README.md" target="_blank" rel="noreferrer">README 与模块边界</a>；</li>
+<li><a href="https://github.com/xai-org/grok-build/blob/7cfcb20d2b50b0d18801a6c0af2e401c0e060894/crates/codegen/xai-grok-pager/docs/user-guide/12-project-rules.md" target="_blank" rel="noreferrer">项目规则发现</a>；</li>
+<li><a href="https://github.com/xai-org/grok-build/blob/7cfcb20d2b50b0d18801a6c0af2e401c0e060894/crates/codegen/xai-grok-pager/docs/user-guide/19-plan-mode.md" target="_blank" rel="noreferrer">Plan Mode</a>；</li>
+<li><a href="https://github.com/xai-org/grok-build/blob/7cfcb20d2b50b0d18801a6c0af2e401c0e060894/crates/codegen/xai-grok-pager/docs/user-guide/22-permissions-and-safety.md" target="_blank" rel="noreferrer">工具授权管线</a>；</li>
+<li><a href="https://github.com/xai-org/grok-build/blob/7cfcb20d2b50b0d18801a6c0af2e401c0e060894/crates/codegen/xai-grok-pager/docs/user-guide/18-sandbox.md" target="_blank" rel="noreferrer">OS 沙箱及平台差异</a>；</li>
+<li><a href="https://github.com/xai-org/grok-build/blob/7cfcb20d2b50b0d18801a6c0af2e401c0e060894/crates/codegen/xai-grok-pager/docs/user-guide/17-sessions.md" target="_blank" rel="noreferrer">Session、resume、rewind 与 compaction</a>。</li>
+</ol>
+<h2 id="10-一套可直接使用的个人工作流">10. 一套可直接使用的个人工作流<a class="heading-anchor" href="#10-一套可直接使用的个人工作流" aria-label="链接到本节">#</a></h2>
+<h3 id="第-1-步建立任务入口">第 1 步：建立任务入口<a class="heading-anchor" href="#第-1-步建立任务入口" aria-label="链接到本节">#</a></h3>
+<p>记录基线 commit 和 <code>git status</code>，确认工作区、工具链、权限和标准命令。首次接触仓库时先做只读地图。</p>
+<h3 id="第-2-步写-issue-式-prompt">第 2 步：写 Issue 式 Prompt<a class="heading-anchor" href="#第-2-步写-issue-式-prompt" aria-label="链接到本节">#</a></h3>
+<p>写目标、复现或示例、相关路径、关键约束、验证命令和停止条件。只保留会改变结果的信息。</p>
+<h3 id="第-3-步按不确定性选择模式">第 3 步：按不确定性选择模式<a class="heading-anchor" href="#第-3-步按不确定性选择模式" aria-label="链接到本节">#</a></h3>
+<ul>
+<li>不熟悉或方案不确定：Ask/Explore → Plan；</li>
+<li>任务局部明确：直接 Code；</li>
+<li>未知 Bug：先诊断再修复；</li>
+<li>重要 patch：实现和 review 使用不同上下文。</li>
+</ul>
+<h3 id="第-4-步边做边验证">第 4 步：边做边验证<a class="heading-anchor" href="#第-4-步边做边验证" aria-label="链接到本节">#</a></h3>
+<p>先运行最快的定向检查，再运行完整门禁。工具失败要读取退出码和原始输出，不能把“尝试运行”写成“通过”。</p>
+<h3 id="第-5-步审查完整-diff">第 5 步：审查完整 diff<a class="heading-anchor" href="#第-5-步审查完整-diff" aria-label="链接到本节">#</a></h3>
+<p>专门检查无关重构、测试弱化、依赖与锁文件变化、错误吞噬、默认成功、权限扩大、API/ABI 变化和调试残留。</p>
+<h3 id="第-6-步独立接受">第 6 步：独立接受<a class="heading-anchor" href="#第-6-步独立接受" aria-label="链接到本节">#</a></h3>
+<p>从干净基线应用 patch，重跑项目规定检查。保留命令、退出码、日志、patch hash、未验证项和人工接受决定。</p>
+<h3 id="第-7-步沉淀一次改进">第 7 步：沉淀一次改进<a class="heading-anchor" href="#第-7-步沉淀一次改进" aria-label="链接到本节">#</a></h3>
+<p>复盘这次最浪费时间的摩擦，只选择一个可复用改进：修脚本、补文档、增加测试、添加静态门禁，或缩短一条失效规则。</p>
+<h2 id="11-常见误区及替代做法">11. 常见误区及替代做法<a class="heading-anchor" href="#11-常见误区及替代做法" aria-label="链接到本节">#</a></h2>
+<div class="table-wrap"><table><thead><tr>
+<th>误区</th>
+<th>为什么会失败</th>
+<th>替代做法</th>
+</tr></thead><tbody>
+<tr>
+<td>先写超长万能 Prompt</td>
+<td>关键约束被淹没，仍缺少环境反馈</td>
+<td>Issue 式任务 + 仓库级持久说明</td>
+</tr>
+<tr>
+<td>所有任务强制先计划</td>
+<td>小任务增加延迟，计划本身也可能错</td>
+<td>根据方案不确定性选择模式</td>
+</tr>
+<tr>
+<td>把整个仓库知识塞进上下文</td>
+<td>上下文拥挤，旧信息持续干扰</td>
+<td>短入口 + 渐进式读取文档</td>
+</tr>
+<tr>
+<td>连续重复“再试一次”</td>
+<td>错误假设留在上下文中累积</td>
+<td>两次无进展后清理上下文并重写首条指令</td>
+</tr>
+<tr>
+<td>Agent 自称通过就接受</td>
+<td>可能误读日志、漏跑测试或测错对象</td>
+<td>保存原始命令、退出码和外部重跑结果</td>
+</tr>
+<tr>
+<td>用 reviewer Agent 代替测试</td>
+<td>reviewer 也会幻觉并继承错误假设</td>
+<td>新视角 review + 确定性门禁 + 人工判断</td>
+</tr>
+<tr>
+<td>为同一阻塞点开很多 Agent</td>
+<td>增加费用，不改变串行依赖</td>
+<td>先拆分问题或设计新的可证伪实验</td>
+</tr>
+<tr>
+<td>为省提示而开放全部权限</td>
+<td>扩大 prompt injection 和误操作影响</td>
+<td>沙箱内自动化，越界动作单独批准</td>
+</tr>
+<tr>
+<td>一次安装大量 Skill/MCP/Hook</td>
+<td>增加上下文、故障点和权限面</td>
+<td>针对反复出现的摩擦逐个添加并验证</td>
+</tr>
+</tbody></table></div>
+<h2 id="12-个人练习与复盘">12. 个人练习与复盘<a class="heading-anchor" href="#12-个人练习与复盘" aria-label="链接到本节">#</a></h2>
+<p>先选择一个公开仓库中的 30～90 分钟任务，按下面顺序练习一次：</p>
+<ol>
+<li>不修改代码，让 Agent 画出相关调用链和验证入口；</li>
+<li>自己写一条 Issue 式 Prompt；</li>
+<li>让 Agent 在独立工作区完成并运行定向检查；</li>
+<li>新开 reviewer 上下文，只提供需求和 diff；</li>
+<li>自己从干净状态执行最终命令；</li>
+<li>记录哪一条环境、文档或验证改进能帮助下一次任务。</li>
+</ol>
+<p>复盘问题：</p>
+<ol>
+<li>我选择 Ask、Plan、Code 或 Review 的理由是什么？</li>
+<li>Agent 失败时，是模型推理问题，还是仓库环境不完整？</li>
+<li>哪条 Prompt 信息实际改变了结果，哪些只是噪声？</li>
+<li>Agent 能否用命令验证自己的关键主张？</li>
+<li>review 是否发现实现会话忽略的假设？</li>
+<li>权限限制是否由系统强制，而非只靠文字？</li>
+<li>下一次应修改 Prompt、仓库说明、工具还是测试？</li>
+</ol>
+<p>下一步打开 <a href="03_personal_practice.html">03：个人实践</a>，使用标准任务把本章流程完整运行一遍。</p>
+<p>完成局部修复练习后，再进入 <a href="https://github.com/jjdak/agentStudy/blob/main/lab/curl-variable-long-task/README.md" target="_blank" rel="noreferrer">curl 长任务实验室</a>。重点不是追求一次通过，而是检查：新会话能否仅凭状态文件准确恢复、各工作包是否有实际完成证据、独立评分是否暴露了 Agent 自报完成与真实集成之间的差距。</p>
+<h2 id="13-来源与证据边界">13. 来源与证据边界<a class="heading-anchor" href="#13-来源与证据边界" aria-label="链接到本节">#</a></h2>
+<div class="table-wrap"><table><thead><tr>
+<th>来源</th>
+<th>类型</th>
+<th>本文使用的内容</th>
+</tr></thead><tbody>
+<tr>
+<td>OpenAI, <a href="https://openai.com/business/guides-and-resources/how-openai-uses-codex/" target="_blank" rel="noreferrer">How OpenAI uses Codex</a></td>
+<td>官方经验</td>
+<td>Ask/Code 切换、任务粒度、Issue 式 Prompt、环境和 <code>AGENTS.md</code></td>
+</tr>
+<tr>
+<td>OpenAI, <a href="https://openai.com/index/harness-engineering/" target="_blank" rel="noreferrer">Harness engineering</a></td>
+<td>工程案例</td>
+<td>短入口文档、渐进披露、可观测性、机械约束和案例边界</td>
+</tr>
+<tr>
+<td>OpenAI, <a href="https://learn.chatgpt.com/docs/prompting#use-editor-context" target="_blank" rel="noreferrer">Prompting Codex</a></td>
+<td>官方文档</td>
+<td>目标、上下文、边界、验证和会话纠偏</td>
+</tr>
+<tr>
+<td>OpenAI, <a href="https://learn.chatgpt.com/docs/agent-approvals-security" target="_blank" rel="noreferrer">Agent approvals &amp; security</a></td>
+<td>官方文档</td>
+<td>OS 沙箱、审批策略、网络与工作区默认值</td>
+</tr>
+<tr>
+<td>OpenAI, <a href="https://developers.openai.com/codex/use-cases" target="_blank" rel="noreferrer">Codex use cases</a></td>
+<td>官方文档与演示入口</td>
+<td>代码理解、迁移、review、QA、CLI 和评分循环示例</td>
+</tr>
+<tr>
+<td>Anthropic, <a href="https://code.claude.com/docs/en/best-practices" target="_blank" rel="noreferrer">Claude Code best practices</a></td>
+<td>官方文档</td>
+<td>验证、Explore-Plan-Code、上下文控制、<code>CLAUDE.md</code>、新会话 review</td>
+</tr>
+<tr>
+<td>Anthropic, <a href="https://code.claude.com/docs/en/common-workflows" target="_blank" rel="noreferrer">Common workflows</a></td>
+<td>官方文档</td>
+<td>任务配方、恢复会话、worktree 和研究子 Agent</td>
+</tr>
+<tr>
+<td>Anthropic, <a href="https://code.claude.com/docs/en/agents" target="_blank" rel="noreferrer">Run agents in parallel</a></td>
+<td>官方文档</td>
+<td>子 Agent、并行会话、Agent team 与 token 代价</td>
+</tr>
+<tr>
+<td>Anthropic, <a href="https://code.claude.com/docs/en/permission-modes" target="_blank" rel="noreferrer">Permission modes</a></td>
+<td>官方文档</td>
+<td>权限模式及隔离环境要求</td>
+</tr>
+<tr>
+<td>Anthropic, <a href="https://www.anthropic.com/engineering/how-we-contain-claude" target="_blank" rel="noreferrer">How we contain Claude</a></td>
+<td>工程案例</td>
+<td>权限审批疲劳与外部隔离的必要性</td>
+</tr>
+<tr>
+<td>Anthropic, <a href="https://www.anthropic.com/engineering/claude-code-sandboxing" target="_blank" rel="noreferrer">Claude Code sandboxing</a></td>
+<td>工程案例</td>
+<td>审批疲劳与沙箱数据</td>
+</tr>
+<tr>
+<td>Anthropic, <a href="https://www.anthropic.com/engineering/building-c-compiler" target="_blank" rel="noreferrer">Building a C compiler</a></td>
+<td>工程案例</td>
+<td>并行、测试、日志、oracle、成本和局限</td>
+</tr>
+<tr>
+<td>GitHub, <a href="https://github.com/anthropics/claudes-c-compiler" target="_blank" rel="noreferrer">anthropics/claudes-c-compiler</a></td>
+<td>公开仓库</td>
+<td>C 编译器代码、README 中的未验证声明</td>
+</tr>
+<tr>
+<td>Stripe, <a href="https://stripe.com/blog/can-ai-agents-build-real-stripe-integrations" target="_blank" rel="noreferrer">Can AI agents build real Stripe integrations?</a></td>
+<td>工程案例</td>
+<td>完整环境、确定性 grader、端到端验证和失败案例</td>
+</tr>
+<tr>
+<td>GitHub, <a href="https://github.com/stripe/ai" target="_blank" rel="noreferrer">stripe/ai</a></td>
+<td>公开仓库</td>
+<td><code>benchmarks/</code>、工具与 Agent 集成实例</td>
+</tr>
+<tr>
+<td>Boris Cherny, <a href="https://x.com/bcherny/status/2007179832300581177" target="_blank" rel="noreferrer">Claude Code setup thread</a></td>
+<td>个人经验</td>
+<td>无唯一正确配置、避免无依据的过度定制</td>
+</tr>
+<tr>
+<td>SpaceXAI, <a href="https://x.ai/news/grok-build-open-source" target="_blank" rel="noreferrer">Grok Build is Now Open Source</a></td>
+<td>官方公告</td>
+<td>开源范围、local-first 与扩展系统</td>
+</tr>
+<tr>
+<td>GitHub, <a href="https://github.com/xai-org/grok-build" target="_blank" rel="noreferrer">xai-org/grok-build</a></td>
+<td>官方源码</td>
+<td>Agent 循环、规则发现、计划、权限、沙箱、会话和扩展实现</td>
+</tr>
+<tr>
+<td>SpaceXAI, <a href="https://docs.x.ai/build/overview" target="_blank" rel="noreferrer">Grok Build docs</a></td>
+<td>官方文档</td>
+<td>本地构建、headless/ACP、自定义模型和 <code>grok inspect</code></td>
+</tr>
+<tr>
+<td>Axios, <a href="https://www.axios.com/newsletters/axios-future-of-cybersecurity-9168e100-7af2-11f1-bc32-bbfb768a7518" target="_blank" rel="noreferrer">Hackers embrace AI</a></td>
+<td>外部调查</td>
+<td>2026-07 代码上传事件；需与源码和网络实测交叉验证</td>
+</tr>
+</tbody></table></div>
+<p>案例中的产出规模、成功率、成本和内部遥测只能说明相应团队在特定模型、工具、仓库与时间点的结果。本文从中提取的是可测试的工作假设，不把这些数字当作对当前模型或你的内网环境的保证。</p>
+        <nav class="page-switcher" aria-label="相邻章节">
+          <a class="previous" href="01_foundations.html"><span>上一篇</span>01. LLM 幻觉与 Agent：软件工程师需要的原理</a>
+<a class="next" href="03_personal_practice.html"><span>下一篇</span>03. 个人实践：模板、检查清单与标准任务</a>
+        </nav>
+      </article>
+    </main>
+    <aside class="page-toc" aria-label="本页目录">
+      <div class="toc-title">本页目录</div>
+      <a class="toc-link toc-level-2" href="#1-先看结论效果不只由-prompt-决定">1. 先看结论：效果不只由 Prompt 决定</a>
+<a class="toc-link toc-level-2" href="#2-不要从万能模板开始先选择工作模式">2. 不要从万能模板开始，先选择工作模式</a>
+<a class="toc-link toc-level-2" href="#3-先把仓库变成-agent-容易工作的环境">3. 先把仓库变成 Agent 容易工作的环境</a>
+<a class="toc-link toc-level-3" href="#31-仓库说明应该是地图不是百科全书">3.1 仓库说明应该是地图，不是百科全书</a>
+<a class="toc-link toc-level-3" href="#32-给-agent-可组合的命令">3.2 给 Agent 可组合的命令</a>
+<a class="toc-link toc-level-3" href="#33-先做一次-15-分钟校准">3.3 先做一次 15 分钟校准</a>
+<a class="toc-link toc-level-2" href="#4-把任务写成一条可执行的-github-issue">4. 把任务写成一条可执行的 GitHub Issue</a>
+<a class="toc-link toc-level-3" href="#41-最有用的六项">4.1 最有用的六项</a>
+<a class="toc-link toc-level-3" href="#42-大功能可以先让-agent-采访你">4.2 大功能可以先让 Agent 采访你</a>
+<a class="toc-link toc-level-2" href="#5-执行中最重要的能力是纠偏">5. 执行中最重要的能力是纠偏</a>
+<a class="toc-link toc-level-3" href="#51-一个适合日常开发的循环">5.1 一个适合日常开发的循环</a>
+<a class="toc-link toc-level-3" href="#52-及早打断避免错误上下文滚雪球">5.2 及早打断，避免错误上下文滚雪球</a>
+<a class="toc-link toc-level-3" href="#53-让-agent-说明事实假设和未知">5.3 让 Agent 说明事实、假设和未知</a>
+<a class="toc-link toc-level-2" href="#6-给-agent-一面镜子可执行验证">6. 给 Agent 一面镜子：可执行验证</a>
+<a class="toc-link toc-level-3" href="#61-验证必须与主张对应">6.1 验证必须与主张对应</a>
+<a class="toc-link toc-level-3" href="#62-根因在-a报错在-b-时">6.2 根因在 A、报错在 B 时</a>
+<a class="toc-link toc-level-3" href="#63-写代码和审查代码使用不同视角">6.3 写代码和审查代码使用不同视角</a>
+<a class="toc-link toc-level-2" href="#7-权限要写进运行环境而不只写进-prompt">7. 权限要写进运行环境，而不只写进 Prompt</a>
+<a class="toc-link toc-level-3" href="#71-沙箱与审批是两件事">7.1 沙箱与审批是两件事</a>
+<a class="toc-link toc-level-3" href="#72-为什么不能靠不断点击允许">7.2 为什么不能靠不断点击“允许”</a>
+<a class="toc-link toc-level-2" href="#8-大型仓库的长任务先建立外部状态再考虑并行">8. 大型仓库的长任务：先建立外部状态，再考虑并行</a>
+<a class="toc-link toc-level-3" href="#81-把长任务变成可恢复的状态机">8.1 把长任务变成可恢复的状态机</a>
+<a class="toc-link toc-level-3" href="#82-并行不是默认答案">8.2 并行不是默认答案</a>
+<a class="toc-link toc-level-2" href="#9-六个真实案例告诉了我们什么">9. 六个真实案例告诉了我们什么</a>
+<a class="toc-link toc-level-3" href="#91-openai-内部像-issue-一样交任务">9.1 OpenAI 内部：像 Issue 一样交任务</a>
+<a class="toc-link toc-level-3" href="#92-openai-agent-first-项目修地图和工具而不是只催模型">9.2 OpenAI Agent-first 项目：修地图和工具，而不是只催模型</a>
+<a class="toc-link toc-level-3" href="#93-anthropic-c-编译器验证器决定自主性的上限">9.3 Anthropic C 编译器：验证器决定自主性的上限</a>
+<a class="toc-link toc-level-3" href="#94-stripe-agent-基准真实验收必须覆盖端到端行为">9.4 Stripe Agent 基准：真实验收必须覆盖端到端行为</a>
+<a class="toc-link toc-level-3" href="#95-claude-code-创建者不要为了显得专业而过度定制">9.5 Claude Code 创建者：不要为了显得专业而过度定制</a>
+<a class="toc-link toc-level-3" href="#96-spacexai-grok-build直接研究-agent-harness">9.6 SpaceXAI Grok Build：直接研究 Agent harness</a>
+<a class="toc-link toc-level-2" href="#10-一套可直接使用的个人工作流">10. 一套可直接使用的个人工作流</a>
+<a class="toc-link toc-level-3" href="#第-1-步建立任务入口">第 1 步：建立任务入口</a>
+<a class="toc-link toc-level-3" href="#第-2-步写-issue-式-prompt">第 2 步：写 Issue 式 Prompt</a>
+<a class="toc-link toc-level-3" href="#第-3-步按不确定性选择模式">第 3 步：按不确定性选择模式</a>
+<a class="toc-link toc-level-3" href="#第-4-步边做边验证">第 4 步：边做边验证</a>
+<a class="toc-link toc-level-3" href="#第-5-步审查完整-diff">第 5 步：审查完整 diff</a>
+<a class="toc-link toc-level-3" href="#第-6-步独立接受">第 6 步：独立接受</a>
+<a class="toc-link toc-level-3" href="#第-7-步沉淀一次改进">第 7 步：沉淀一次改进</a>
+<a class="toc-link toc-level-2" href="#11-常见误区及替代做法">11. 常见误区及替代做法</a>
+<a class="toc-link toc-level-2" href="#12-个人练习与复盘">12. 个人练习与复盘</a>
+<a class="toc-link toc-level-2" href="#13-来源与证据边界">13. 来源与证据边界</a>
+      <a class="back-to-top" href="#">返回顶部 ↑</a>
+    </aside>
+  </div>
+</body>
+</html>

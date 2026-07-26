@@ -28,6 +28,7 @@ docs/
 ├── 02_coding_agent_playbook.md# Coding Agent 实际使用主线
 └── 03_personal_practice.md    # 模板、检查清单与标准任务练习
 
+html/                          # 三篇文档的静态 HTML 阅读版本
 lab/swebench-fmt-2310/         # Linux + Docker 的局部缺陷修复标准任务
 lab/curl-variable-long-task/   # curl 跨模块长任务与可重复独立评分
 references/                    # 论文、官方资料与基准选择依据
@@ -49,6 +50,8 @@ references/                    # 论文、官方资料与基准选择依据
 完成主线后，可再用 4～8 小时或多个会话运行 [curl 长任务实验室](lab/curl-variable-long-task/README.md)，练习大型仓库地图、外部状态、跨模块集成和断点恢复。它与第 6 次的局部 Bug 修复不是同一个难度层级。
 
 先读 [01：必要原理](docs/01_foundations.md)，再把 [02：实战手册](docs/02_coding_agent_playbook.md) 作为日常主线。真正执行任务时打开 [03：个人实践](docs/03_personal_practice.md)。
+
+如果希望使用更适合分享的排版，可下载仓库后直接打开 [`html/index.html`](html/index.html)。HTML 版本包含章节导航、深浅主题、阅读进度、公式、Mermaid 流程图和移动端布局；修改 Markdown 后运行 `node html/build.mjs` 即可重新生成。
 
 ## 三条贯穿全仓库的原则
 

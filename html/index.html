@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="从 LLM 原理到 Coding Agent 实践的个人学习手册。">
+  <title>Agent Study · 个人学习手册</title>
+  <link rel="stylesheet" href="assets/style.css?v=20260726-1">
+  <script defer src="assets/app.js?v=20260726-1"></script>
+</head>
+<body class="home-page">
+  <header class="home-header">
+    <a class="brand compact" href="index.html">Agent Study</a>
+    <div>
+      <button class="theme-button theme-toggle" type="button">切换深浅主题</button>
+      <a class="github-link" href="https://github.com/jjdak/agentStudy" target="_blank" rel="noreferrer">GitHub ↗</a>
+    </div>
+  </header>
+  <main class="home-main">
+    <section class="hero">
+      <p class="hero-kicker">PERSONAL LEARNING PATH · 2026</p>
+      <h1>从理解模型，<br>到可靠地使用 Coding Agent</h1>
+      <p class="hero-lead">一套面向软件工程师的个人学习材料。先理解生成与幻觉，再学习任务设计、工具反馈、权限控制和独立验收，最后在可重复环境中练习。</p>
+      <div class="hero-actions">
+        <a class="primary-button" href="01_foundations.html">从第一篇开始</a>
+        <span>约 4–6 小时阅读，另加实践时间</span>
+      </div>
+    </section>
+    <section class="learning-path" aria-label="学习路径">
+      <a class="home-card" href="01_foundations.html">
+      <span class="card-index">01</span>
+      <span class="card-eyebrow">原理</span>
+      <h2>LLM 幻觉与 Agent：软件工程师需要的原理</h2>
+      <p>从 Token、Transformer 和幻觉机制，走到工具、权限与验证器。</p>
+      <span class="card-action">开始阅读 →</span>
+    </a>
+<a class="home-card" href="02_coding_agent_playbook.html">
+      <span class="card-index">02</span>
+      <span class="card-eyebrow">方法</span>
+      <h2>Coding Agent 实战手册</h2>
+      <p>把 Coding Agent 作为可观察、可纠偏、可验收的工程系统使用。</p>
+      <span class="card-action">开始阅读 →</span>
+    </a>
+<a class="home-card" href="03_personal_practice.html">
+      <span class="card-index">03</span>
+      <span class="card-eyebrow">实践</span>
+      <h2>个人实践：模板、检查清单与标准任务</h2>
+      <p>使用检查清单、提示词模板和标准任务完成个人练习。</p>
+      <span class="card-action">开始阅读 →</span>
+    </a>
+    </section>
+    <section class="principle-strip">
+      <p>贯穿原则</p>
+      <strong>模型负责提出候选方案，工具提供观察，验证器决定能否接受。</strong>
+    </section>
+  </main>
+  <footer class="home-footer">
+    <span>内容以仓库中的 Markdown 为唯一来源。</span>
+    <span>运行 <code>node html/build.mjs</code> 重新生成。</span>
+  </footer>
+</body>
+</html>
