@@ -7,12 +7,23 @@
   const previousButton = document.querySelector(".previous-slide");
   const nextButton = document.querySelector(".next-slide");
   const overviewPanel = document.querySelector(".overview-panel");
+  const imageViewer = document.querySelector(".image-viewer");
+  const imageViewerStage = document.querySelector(".image-viewer-stage");
+  const imageViewerImage = document.querySelector(".image-viewer-image");
+  const imageViewerTitle = document.querySelector(".image-viewer-title");
+  const imageViewerScale = document.querySelector(".image-viewer-scale");
+  const imageViewerSource = document.querySelector(".image-viewer-source");
   const storedTheme = localStorage.getItem("agent-study-theme");
   const preferredDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   let current = 0;
   let wheelLocked = false;
   let touchStartX = 0;
   let touchStartY = 0;
+  let viewerScale = 1;
+  let viewerX = 0;
+  let viewerY = 0;
+  let viewerDragStart = null;
+  let viewerReturnFocus = null;
 
   root.dataset.theme = storedTheme || (preferredDark ? "dark" : "light");
 
@@ -61,6 +72,145 @@
     overviewPanel.setAttribute("aria-hidden", open ? "false" : "true");
   };
 
+  const applyViewerTransform = () => {
+    imageViewerImage.style.transform =
+      `translate3d(${viewerX}px, ${viewerY}px, 0) scale(${viewerScale})`;
+    imageViewerScale.textContent = `${Math.round(viewerScale * 100)}%`;
+  };
+
+  const resetImageViewer = () => {
+    viewerScale = 1;
+    viewerX = 0;
+    viewerY = 0;
+    applyViewerTransform();
+  };
+
+  const setViewerScale = (nextScale) => {
+    viewerScale = Math.min(5, Math.max(1, nextScale));
+    if (viewerScale === 1) {
+      viewerX = 0;
+      viewerY = 0;
+    }
+    applyViewerTransform();
+  };
+
+  const openImageViewer = (image) => {
+    const sourceLink = image.closest(".image-link");
+    const label = image.alt || "演示图片";
+    viewerReturnFocus = document.activeElement;
+    imageViewerImage.src = image.currentSrc || image.src;
+    imageViewerImage.alt = label;
+    imageViewerTitle.textContent = label;
+    if (sourceLink?.href) {
+      imageViewerSource.href = sourceLink.href;
+      imageViewerSource.hidden = false;
+    } else {
+      imageViewerSource.hidden = true;
+      imageViewerSource.removeAttribute("href");
+    }
+    toggleOverview(false);
+    resetImageViewer();
+    document.body.classList.add("image-viewer-open");
+    imageViewer.setAttribute("aria-hidden", "false");
+    document.querySelector('[data-viewer-action="close"]').focus();
+  };
+
+  const closeImageViewer = () => {
+    document.body.classList.remove("image-viewer-open");
+    imageViewer.setAttribute("aria-hidden", "true");
+    imageViewerImage.removeAttribute("src");
+    resetImageViewer();
+    if (viewerReturnFocus instanceof HTMLElement) viewerReturnFocus.focus();
+  };
+
+  for (const image of document.querySelectorAll(".slide.has-image img")) {
+    const sourceLink = image.closest(".image-link");
+    const container = image.closest("p");
+    const openViewer = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openImageViewer(image);
+    };
+
+    image.title = "点击放大";
+    if (sourceLink) {
+      sourceLink.setAttribute("aria-label", `放大图片：${image.alt || "演示图片"}`);
+      sourceLink.addEventListener("click", openViewer);
+    } else {
+      image.tabIndex = 0;
+      image.setAttribute("role", "button");
+      image.setAttribute("aria-label", `放大图片：${image.alt || "演示图片"}`);
+      image.addEventListener("click", openViewer);
+      image.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") openViewer(event);
+      });
+    }
+
+    if (container) {
+      const zoomButton = document.createElement("button");
+      zoomButton.className = "image-zoom-trigger";
+      zoomButton.type = "button";
+      zoomButton.textContent = "放大";
+      zoomButton.setAttribute("aria-label", `放大图片：${image.alt || "演示图片"}`);
+      zoomButton.addEventListener("click", openViewer);
+      container.append(zoomButton);
+    }
+
+    if (!image.complete) image.addEventListener("load", updateOverflow);
+  }
+
+  for (const button of document.querySelectorAll("[data-viewer-action]")) {
+    button.addEventListener("click", () => {
+      const action = button.dataset.viewerAction;
+      if (action === "close") closeImageViewer();
+      else if (action === "zoom-in") setViewerScale(viewerScale * 1.25);
+      else if (action === "zoom-out") setViewerScale(viewerScale / 1.25);
+      else if (action === "reset") resetImageViewer();
+    });
+  }
+
+  imageViewerStage.addEventListener(
+    "wheel",
+    (event) => {
+      event.preventDefault();
+      setViewerScale(viewerScale * (event.deltaY < 0 ? 1.12 : 1 / 1.12));
+    },
+    { passive: false },
+  );
+
+  imageViewerStage.addEventListener("dblclick", () => {
+    setViewerScale(viewerScale > 1 ? 1 : 2.5);
+  });
+
+  imageViewerStage.addEventListener("pointerdown", (event) => {
+    if (viewerScale <= 1) return;
+    viewerDragStart = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      originX: viewerX,
+      originY: viewerY,
+    };
+    imageViewerStage.classList.add("is-dragging");
+    imageViewerStage.setPointerCapture(event.pointerId);
+  });
+
+  imageViewerStage.addEventListener("pointermove", (event) => {
+    if (!viewerDragStart || event.pointerId !== viewerDragStart.pointerId) return;
+    viewerX = viewerDragStart.originX + event.clientX - viewerDragStart.x;
+    viewerY = viewerDragStart.originY + event.clientY - viewerDragStart.y;
+    applyViewerTransform();
+  });
+
+  const stopViewerDrag = (event) => {
+    if (!viewerDragStart || event.pointerId !== viewerDragStart.pointerId) return;
+    viewerDragStart = null;
+    imageViewerStage.classList.remove("is-dragging");
+  };
+
+  imageViewerStage.addEventListener("pointerup", stopViewerDrag);
+  imageViewerStage.addEventListener("pointercancel", stopViewerDrag);
+
   previousButton.addEventListener("click", () => move(-1));
   nextButton.addEventListener("click", () => move(1));
   document.querySelector(".overview-toggle").addEventListener("click", () => toggleOverview());
@@ -103,6 +253,22 @@
 
   document.addEventListener("keydown", (event) => {
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+      return;
+    }
+    if (document.body.classList.contains("image-viewer-open")) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeImageViewer();
+      } else if (event.key === "+" || event.key === "=") {
+        event.preventDefault();
+        setViewerScale(viewerScale * 1.25);
+      } else if (event.key === "-") {
+        event.preventDefault();
+        setViewerScale(viewerScale / 1.25);
+      } else if (event.key === "0") {
+        event.preventDefault();
+        resetImageViewer();
+      }
       return;
     }
     if (document.body.classList.contains("overview-open")) {

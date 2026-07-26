@@ -225,14 +225,165 @@ body.slides-page {
 }
 
 .slide img {
+  display: block;
   max-width: 100%;
-  max-height: 31vh;
+  max-height: 58vh;
   margin: 1rem auto 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: var(--shadow);
   object-fit: contain;
 }
 
 .slide .image-link {
+  position: relative;
+  display: block;
   width: 100%;
+}
+
+.slide.has-image .slide-content > p:has(> img),
+.slide.has-image .slide-content > p:has(> .image-link) {
+  position: relative;
+}
+
+.image-zoom-trigger {
+  position: absolute;
+  z-index: 2;
+  right: 10px;
+  bottom: 10px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: 0 6px 20px rgba(17, 27, 25, 0.18);
+  color: var(--text);
+  cursor: zoom-in;
+  font-size: 0.72rem;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+}
+
+.image-zoom-trigger:hover,
+.image-zoom-trigger:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.slide.has-image img {
+  cursor: zoom-in;
+}
+
+.slide.layout-image .slide-content {
+  display: grid;
+  width: min(1240px, 100%);
+  height: 100%;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  overflow: hidden;
+  padding: clamp(18px, 2.2vw, 28px);
+}
+
+.slide.layout-image h2,
+.slide.layout-split h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3.2vw, 3rem);
+}
+
+.slide.layout-image .slide-content > p:has(> img),
+.slide.layout-image .slide-content > p:has(> .image-link) {
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  margin: 0;
+  overflow: hidden;
+}
+
+.slide.layout-image .image-link {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+}
+
+.slide.layout-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+}
+
+.slide.layout-image .slide-content > p:has(> em:first-child:last-child) {
+  max-width: 1080px;
+  margin: 0 auto;
+  color: var(--muted);
+  text-align: center;
+}
+
+.slide.layout-split .slide-content {
+  display: grid;
+  width: min(1240px, 100%);
+  height: 100%;
+  grid-template-columns: minmax(0, 1.65fr) minmax(250px, 0.75fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 16px 28px;
+  overflow: hidden;
+  padding: clamp(18px, 2.2vw, 28px);
+}
+
+.slide.layout-split h2 {
+  grid-column: 1 / -1;
+}
+
+.slide.layout-split .slide-content > p:has(> img),
+.slide.layout-split .slide-content > p:has(> .image-link) {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-column: 1;
+  grid-row: 2 / 4;
+  place-items: center;
+  margin: 0;
+  overflow: hidden;
+}
+
+.slide.layout-split .image-link {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  place-items: center;
+}
+
+.slide.layout-split img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+}
+
+.slide.layout-split .slide-content > p:has(> em:first-child:last-child) {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+  margin: 0;
+  color: var(--muted);
+}
+
+.slide.layout-split .slide-content > p:not(:has(> img)):not(:has(> .image-link)):not(:has(> em:first-child:last-child)) {
+  grid-column: 2;
+  grid-row: 3;
+  align-self: end;
+  margin: 0;
 }
 
 .slide .table-wrap {
@@ -385,6 +536,136 @@ body.overview-open .overview-panel {
   transition-delay: 0s;
 }
 
+.image-viewer {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  visibility: hidden;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 16px 20px 12px;
+  background: color-mix(in srgb, #07110f 94%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 160ms ease,
+    visibility 0s linear 160ms;
+}
+
+body.image-viewer-open .image-viewer {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.image-viewer-toolbar {
+  display: flex;
+  min-width: 0;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  color: #f7faf9;
+}
+
+.image-viewer-title {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.image-viewer-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+}
+
+.image-viewer-actions button,
+.image-viewer-source {
+  display: inline-grid;
+  min-width: 36px;
+  min-height: 36px;
+  place-items: center;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7faf9;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  text-decoration: none;
+}
+
+.image-viewer-actions button:hover,
+.image-viewer-source:hover {
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.image-viewer-source[hidden] {
+  display: none;
+}
+
+.image-viewer-scale {
+  min-width: 48px;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.image-viewer-stage {
+  position: relative;
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.025) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.025) 25%, transparent 25%),
+    #0b1513;
+  background-position: 0 0, 10px 10px;
+  background-size: 20px 20px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.image-viewer-stage.is-dragging {
+  cursor: grabbing;
+}
+
+.image-viewer-image {
+  display: block;
+  max-width: calc(100vw - 64px);
+  max-height: calc(100svh - 132px);
+  border: 0;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  object-fit: contain;
+  transform: translate3d(0, 0, 0) scale(1);
+  transform-origin: center;
+  transition: transform 100ms ease-out;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.image-viewer-stage.is-dragging .image-viewer-image {
+  transition: none;
+}
+
+.image-viewer-help {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.7rem;
+  text-align: center;
+}
+
 .overview-header {
   display: flex;
   max-width: 1180px;
@@ -494,6 +775,71 @@ body.overview-open .overview-panel {
     line-height: 1.6;
   }
 
+  .slide.layout-image .slide-content,
+  .slide.layout-split .slide-content {
+    padding: 16px;
+  }
+
+  .slide.layout-image h2,
+  .slide.layout-split h2 {
+    font-size: clamp(1.55rem, 7vw, 2.15rem);
+  }
+
+  .slide.layout-split .slide-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(240px, 1fr) auto auto;
+    gap: 10px;
+    overflow: auto;
+  }
+
+  .slide.layout-split h2,
+  .slide.layout-split .slide-content > p:has(> img),
+  .slide.layout-split .slide-content > p:has(> .image-link),
+  .slide.layout-split .slide-content > p:has(> em:first-child:last-child),
+  .slide.layout-split .slide-content > p:not(:has(> img)):not(:has(> .image-link)):not(:has(> em:first-child:last-child)) {
+    grid-column: 1;
+  }
+
+  .slide.layout-split h2 {
+    grid-row: 1;
+  }
+
+  .slide.layout-split .slide-content > p:has(> img),
+  .slide.layout-split .slide-content > p:has(> .image-link) {
+    grid-row: 2;
+  }
+
+  .slide.layout-split .slide-content > p:has(> em:first-child:last-child) {
+    grid-row: 3;
+  }
+
+  .slide.layout-split .slide-content > p:not(:has(> img)):not(:has(> .image-link)):not(:has(> em:first-child:last-child)) {
+    grid-row: 4;
+  }
+
+  .image-viewer {
+    padding: 10px;
+  }
+
+  .image-viewer-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .image-viewer-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .image-viewer-source {
+    margin-right: auto;
+  }
+
+  .image-viewer-help {
+    font-size: 0.64rem;
+  }
+
   .deck-footer {
     grid-template-columns: 42px auto 1fr 42px;
     gap: 8px;
@@ -525,7 +871,8 @@ body.overview-open .overview-panel {
   .deck-header,
   .deck-footer,
   .deck-progress,
-  .overview-panel {
+  .overview-panel,
+  .image-viewer {
     display: none !important;
   }
 

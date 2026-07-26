@@ -14,7 +14,7 @@ const repoRoot = resolve(scriptDir, "..");
 const docsDir = join(repoRoot, "docs");
 const assetsDir = join(scriptDir, "assets");
 const repoUrl = "https://github.com/jjdak/agentStudy";
-const assetVersion = "20260726-7";
+const assetVersion = "20260726-10";
 
 const pages = [
   {
@@ -431,6 +431,25 @@ function splitPresentationSlides(markdown, sourceName) {
       ? `## ${current.title}\n\n${content}`
       : content;
     const rendered = renderMarkdown(withTitle, sourceName).html;
+    const hasImage = rendered.includes("<img ");
+    const hasMermaid = rendered.includes('class="mermaid"');
+    const nonVisualText = current.lines
+      .map((line) => line.trim())
+      .filter(
+        (line) =>
+          line &&
+          !/^#{1,6}\s/.test(line) &&
+          !line.includes("![") &&
+          !/^\*图：/.test(line),
+      )
+      .join(" ");
+    const layoutClass = hasImage
+      ? nonVisualText
+        ? "layout-split"
+        : "layout-image"
+      : hasMermaid
+        ? "layout-visual"
+        : "layout-text";
     slides.push({
       html: rendered,
       title:
@@ -438,10 +457,11 @@ function splitPresentationSlides(markdown, sourceName) {
         content.match(/^#{1,6}\s+(.+)$/m)?.[1]?.replace(/[`*_]/g, "") ||
         `第 ${slides.length + 1} 页`,
       classes: [
+        layoutClass,
         slides.length === 0 ? "is-cover" : "",
-        rendered.includes("<img ") ? "has-image" : "",
+        hasImage ? "has-image" : "",
         rendered.includes("<table>") ? "has-table" : "",
-        rendered.includes('class="mermaid"') ? "has-mermaid" : "",
+        hasMermaid ? "has-mermaid" : "",
         rendered.includes('class="math-block"') ? "has-math" : "",
         rendered.includes('class="code-block"') ? "has-code" : "",
       ]
@@ -537,6 +557,23 @@ function presentationShell({ title, sourcePage, slides }) {
     <div class="overview-grid">
       ${overviewItems}
     </div>
+  </div>
+  <div class="image-viewer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="图片查看器">
+    <div class="image-viewer-toolbar">
+      <strong class="image-viewer-title">图片</strong>
+      <div class="image-viewer-actions">
+        <a class="image-viewer-source" href="#" target="_blank" rel="noreferrer" hidden>查看来源 ↗</a>
+        <button type="button" data-viewer-action="zoom-out" aria-label="缩小图片">−</button>
+        <span class="image-viewer-scale">100%</span>
+        <button type="button" data-viewer-action="zoom-in" aria-label="放大图片">＋</button>
+        <button type="button" data-viewer-action="reset" aria-label="重置图片缩放">重置</button>
+        <button type="button" data-viewer-action="close" aria-label="关闭图片查看器">关闭</button>
+      </div>
+    </div>
+    <div class="image-viewer-stage">
+      <img class="image-viewer-image" alt="" draggable="false">
+    </div>
+    <p class="image-viewer-help">滚轮或 ＋/− 缩放 · 放大后拖动 · 双击切换 · Esc 返回</p>
   </div>
 </body>
 </html>`;
