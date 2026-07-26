@@ -14,12 +14,13 @@ const repoRoot = resolve(scriptDir, "..");
 const docsDir = join(repoRoot, "docs");
 const assetsDir = join(scriptDir, "assets");
 const repoUrl = "https://github.com/jjdak/agentStudy";
-const assetVersion = "20260726-1";
+const assetVersion = "20260726-7";
 
 const pages = [
   {
     source: "01_foundations.md",
     output: "01_foundations.html",
+    slides: "01_foundations_slides.html",
     eyebrow: "原理",
     description: "从 Token、Transformer 和幻觉机制，走到工具、权限与验证器。",
   },
@@ -234,6 +235,10 @@ function renderMarkdown(markdown, sourceName) {
       continue;
     }
 
+    if (/^\s*<!--.*-->\s*$/.test(line)) {
+      continue;
+    }
+
     const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
     if (headingMatch) {
       flushOpenBlocks();
@@ -288,17 +293,21 @@ function renderMarkdown(markdown, sourceName) {
     }
 
     const unorderedMatch = line.match(/^[-*+]\s+(.+)$/);
-    const orderedMatch = line.match(/^\d+\.\s+(.+)$/);
+    const orderedMatch = line.match(/^(\d+)\.\s+(.+)$/);
     if (unorderedMatch || orderedMatch) {
       flushParagraph();
       flushBlockquote();
       const requestedType = orderedMatch ? "ol" : "ul";
       if (listType !== requestedType) {
         flushList();
-        html.push(`<${requestedType}>`);
+        const start =
+          orderedMatch && orderedMatch[1] !== "1"
+            ? ` start="${orderedMatch[1]}"`
+            : "";
+        html.push(`<${requestedType}${start}>`);
         listType = requestedType;
       }
-      let item = (orderedMatch ?? unorderedMatch)[1];
+      let item = orderedMatch ? orderedMatch[2] : unorderedMatch[1];
       const taskMatch = item.match(/^\[([ xX])\]\s+(.+)$/);
       if (taskMatch) {
         const checked = taskMatch[1].toLowerCase() === "x";
@@ -345,6 +354,11 @@ function tocNavigation(toc) {
 }
 
 function documentShell({ title, body, toc, activeOutput, description }) {
+  const currentPage = pages.find((page) => page.output === activeOutput);
+  const presentationLink = currentPage?.slides
+    ? `        <a class="presentation-entry" href="${currentPage.slides}">演示模式 →</a>
+`
+    : "";
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -382,6 +396,7 @@ function documentShell({ title, body, toc, activeOutput, description }) {
         ${pageNavigation(activeOutput)}
       </nav>
       <div class="sidebar-footer">
+${presentationLink}\
         <button class="theme-button theme-toggle" type="button">切换深浅主题</button>
         <a href="${repoUrl}" target="_blank" rel="noreferrer">查看 GitHub 源码 ↗</a>
       </div>
@@ -399,6 +414,129 @@ function documentShell({ title, body, toc, activeOutput, description }) {
       ${tocNavigation(toc)}
       <a class="back-to-top" href="#">返回顶部 ↑</a>
     </aside>
+  </div>
+</body>
+</html>`;
+}
+
+function splitPresentationSlides(markdown, sourceName) {
+  const marker = /^\s*<!--\s*slide(?:\s*:\s*(.*?))?\s*-->\s*$/;
+  const slides = [];
+  let current = { title: "", lines: [] };
+
+  const pushCurrent = () => {
+    const content = current.lines.join("\n").trim();
+    if (!content) return;
+    const withTitle = current.title
+      ? `## ${current.title}\n\n${content}`
+      : content;
+    const rendered = renderMarkdown(withTitle, sourceName).html;
+    slides.push({
+      html: rendered,
+      title:
+        current.title ||
+        content.match(/^#{1,6}\s+(.+)$/m)?.[1]?.replace(/[`*_]/g, "") ||
+        `第 ${slides.length + 1} 页`,
+      classes: [
+        slides.length === 0 ? "is-cover" : "",
+        rendered.includes("<img ") ? "has-image" : "",
+        rendered.includes("<table>") ? "has-table" : "",
+        rendered.includes('class="mermaid"') ? "has-mermaid" : "",
+        rendered.includes('class="math-block"') ? "has-math" : "",
+        rendered.includes('class="code-block"') ? "has-code" : "",
+      ]
+        .filter(Boolean)
+        .join(" "),
+    });
+  };
+
+  for (const line of markdown.replaceAll("\r\n", "\n").split("\n")) {
+    const match = line.match(marker);
+    if (match) {
+      pushCurrent();
+      current = { title: match[1]?.trim() ?? "", lines: [] };
+      continue;
+    }
+    current.lines.push(line);
+  }
+  pushCurrent();
+
+  if (slides.length < 2) {
+    throw new Error(
+      `${sourceName} needs standalone <!-- slide --> markers for presentation mode`,
+    );
+  }
+  return slides;
+}
+
+function presentationShell({ title, sourcePage, slides }) {
+  const slideSections = slides
+    .map(
+      (slide, index) => `<section class="slide ${slide.classes}" id="slide-${index + 1}" data-slide-index="${index}" aria-label="第 ${index + 1} 页：${escapeHtml(slide.title)}">
+        <div class="slide-content">
+          ${slide.html}
+        </div>
+      </section>`,
+    )
+    .join("\n");
+
+  const overviewItems = slides
+    .map(
+      (slide, index) => `<button class="overview-item" type="button" data-target-slide="${index}">
+        <span>${String(index + 1).padStart(2, "0")}</span>
+        <strong>${escapeHtml(slide.title)}</strong>
+      </button>`,
+    )
+    .join("\n");
+
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="${escapeHtml(title)}的演示模式。">
+  <title>${escapeHtml(title)} · 演示模式</title>
+  <link rel="stylesheet" href="assets/style.css?v=${assetVersion}">
+  <link rel="stylesheet" href="assets/slides.css?v=${assetVersion}">
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [["\\\\(", "\\\\)"]], displayMath: [["\\\\[", "\\\\]"]] },
+      options: { skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script defer src="assets/slides.js?v=${assetVersion}"></script>
+</head>
+<body class="slides-page">
+  <header class="deck-header">
+    <a class="deck-brand" href="index.html">Agent Study</a>
+    <div class="deck-mode">演示模式</div>
+    <div class="deck-header-actions">
+      <a href="${sourcePage}">阅读全文</a>
+      <button class="deck-icon theme-toggle" type="button" aria-label="切换颜色主题">◐</button>
+      <button class="deck-icon overview-toggle" type="button" aria-label="打开页面总览">▦</button>
+      <button class="deck-icon fullscreen-toggle" type="button" aria-label="进入全屏">⛶</button>
+    </div>
+  </header>
+  <main class="deck" aria-live="polite">
+    ${slideSections}
+  </main>
+  <div class="deck-progress" aria-hidden="true"><span></span></div>
+  <footer class="deck-footer">
+    <button class="deck-nav previous-slide" type="button" aria-label="上一页">←</button>
+    <div class="slide-counter"><strong>01</strong><span>/ ${String(slides.length).padStart(2, "0")}</span></div>
+    <p class="deck-hint">方向键切换 · O 总览 · F 全屏</p>
+    <button class="deck-nav next-slide" type="button" aria-label="下一页">→</button>
+  </footer>
+  <div class="overview-panel" aria-hidden="true">
+    <div class="overview-header">
+      <strong>页面总览</strong>
+      <button class="overview-close" type="button" aria-label="关闭页面总览">关闭</button>
+    </div>
+    <div class="overview-grid">
+      ${overviewItems}
+    </div>
   </div>
 </body>
 </html>`;
@@ -441,6 +579,19 @@ for (const page of pages) {
   );
 }
 
+for (const page of pages.filter((item) => item.slides)) {
+  const markdown = readFileSync(join(docsDir, page.source), "utf8");
+  const slides = splitPresentationSlides(markdown, page.source);
+  writeFileSync(
+    join(scriptDir, page.slides),
+    presentationShell({
+      title: pageTitles.get(page.source),
+      sourcePage: page.output,
+      slides,
+    }),
+  );
+}
+
 const totalMinutes = "约 4–6 小时阅读，另加实践时间";
 const cards = pages
   .map(
@@ -479,6 +630,7 @@ const indexHtml = `<!doctype html>
       <p class="hero-lead">一套面向软件工程师的个人学习材料。先理解生成与幻觉，再学习任务设计、工具反馈、权限控制和独立验收，最后在可重复环境中练习。</p>
       <div class="hero-actions">
         <a class="primary-button" href="${pages[0].output}">从第一篇开始</a>
+        <a class="secondary-button" href="${pages[0].slides}">打开演示模式</a>
         <span>${totalMinutes}</span>
       </div>
     </section>
@@ -499,10 +651,14 @@ const indexHtml = `<!doctype html>
 
 writeFileSync(join(scriptDir, "index.html"), indexHtml);
 
-for (const file of ["style.css", "app.js"]) {
+for (const file of ["style.css", "app.js", "slides.css", "slides.js"]) {
   if (!existsSync(join(assetsDir, file))) {
     throw new Error(`Missing required asset: html/assets/${file}`);
   }
 }
 
-console.log(`Generated ${pages.length + 1} HTML pages in ${relative(repoRoot, scriptDir)}/`);
+const generatedPageCount =
+  pages.length + pages.filter((page) => page.slides).length + 1;
+console.log(
+  `Generated ${generatedPageCount} HTML pages in ${relative(repoRoot, scriptDir)}/`,
+);

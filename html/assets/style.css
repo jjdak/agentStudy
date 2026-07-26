@@ -190,6 +190,16 @@ button {
   text-decoration: none;
 }
 
+.sidebar-footer .presentation-entry {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
 .theme-button {
   width: fit-content;
   padding: 7px 10px;
@@ -609,6 +619,24 @@ tr:last-child td {
 
 .primary-button:hover {
   background: var(--accent-dark);
+}
+
+.secondary-button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  padding: 0 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.secondary-button:hover {
+  border-color: var(--accent);
+  color: var(--accent-dark);
 }
 
 .learning-path {

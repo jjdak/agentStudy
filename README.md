@@ -28,7 +28,7 @@ docs/
 ├── 02_coding_agent_playbook.md# Coding Agent 实际使用主线
 └── 03_personal_practice.md    # 模板、检查清单与标准任务练习
 
-html/                          # 三篇文档的静态 HTML 阅读版本
+html/                          # 三篇文档的 HTML 阅读版及 01 分页演示版
 lab/swebench-fmt-2310/         # Linux + Docker 的局部缺陷修复标准任务
 lab/curl-variable-long-task/   # curl 跨模块长任务与可重复独立评分
 references/                    # 论文、官方资料与基准选择依据
@@ -51,7 +51,7 @@ references/                    # 论文、官方资料与基准选择依据
 
 先读 [01：必要原理](docs/01_foundations.md)，再把 [02：实战手册](docs/02_coding_agent_playbook.md) 作为日常主线。真正执行任务时打开 [03：个人实践](docs/03_personal_practice.md)。
 
-如果希望使用更适合分享的排版，可下载仓库后直接打开 [`html/index.html`](html/index.html)。HTML 版本包含章节导航、深浅主题、阅读进度、公式、Mermaid 流程图和移动端布局；修改 Markdown 后运行 `node html/build.mjs` 即可重新生成。
+如果希望使用更适合分享的排版，可下载仓库后直接打开 [`html/index.html`](html/index.html)。HTML 版本包含章节导航、深浅主题、阅读进度、公式、Mermaid 流程图和移动端布局；[`01 的演示模式`](html/01_foundations_slides.html) 还支持键盘/触摸翻页、总览、全屏和打印。两种页面共用 Markdown 正文，修改后运行 `node html/build.mjs` 即可重新生成。
 
 ## 三条贯穿全仓库的原则
 
