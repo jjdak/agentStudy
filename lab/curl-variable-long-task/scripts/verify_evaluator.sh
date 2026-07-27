@@ -7,7 +7,8 @@ source "$SCRIPT_DIR/common.sh"
 
 require_scoring_assets
 self_check="$EVALUATOR_DIR/self-check"
-rm -rf "$self_check" "$EVALUATOR_DIR/VERIFIED.json"
+verified=$(verified_file)
+rm -rf "$self_check" "$verified"
 mkdir -p "$self_check"
 : >"$self_check/empty.patch"
 
@@ -34,12 +35,14 @@ jq -n \
     --arg gold_patch_sha256 "$LAB_GOLD_PATCH_SHA256" \
     --arg oracle_sha256 "$(sha256_file "$EVALUATOR_DIR/black_box_tests.sh")" \
     --arg hidden_manifest_sha256 "$(sha256_file "$EVALUATOR_DIR/hidden-tests.sha256")" \
-    --arg image_id "$(image_id)" \
+    --arg backend "$BACKEND" \
+    --arg toolchain_identity "$(toolchain_identity)" \
     '{verified_at:$verified_at,source_sha256:$source_sha256,
       gold_patch_sha256:$gold_patch_sha256,oracle_sha256:$oracle_sha256,
-      hidden_manifest_sha256:$hidden_manifest_sha256,image_id:$image_id,
+      hidden_manifest_sha256:$hidden_manifest_sha256,backend:$backend,
+      toolchain_identity:$toolchain_identity,
       controls:{negative:{build_passed:true,resolved:false},gold:{resolved:true}}}' \
-    >"$EVALUATOR_DIR/VERIFIED.json"
+    >"$verified"
 
 printf 'evaluator verification: PASS\n'
-cat "$EVALUATOR_DIR/VERIFIED.json"
+cat "$verified"

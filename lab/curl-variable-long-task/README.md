@@ -18,31 +18,40 @@
 | 修复前源码 | `47a3e6e577b019b8dfce8d3f8df764a8dd427fd2` |
 | 可信参考实现 | [curl/curl@2e160c9](https://github.com/curl/curl/commit/2e160c9c652504e147f474ed920ae891481e299c) |
 | 任务主题 | command line variables，最初合入 curl 8.3.0 |
-| 平台 | Linux/WSL2 x86_64 + Docker Linux containers |
+| 平台 | 制备：Linux/WSL2 x86_64 + Docker；内网运行：Linux x86_64 rootless user namespaces |
 | 编译 | GCC，Autotools + CMake，ASan + UBSan，静态 curl |
 | 必须通过 | 构建、15 项外部黑盒检查、10 项上游隐藏测试、8 项既有回归测试 |
 | 可选门禁 | curl 完整回归测试 |
 
-源码包、参考 patch 和 Debian 基础镜像都在 [`config.env`](config.env) 中以 commit 或 digest 和 SHA-256 固定。在线准备完成后，实际安装的 Debian 包版本、工具链 image ID 和镜像本身也会被保存；从此可以导出到离线机器复用。`apt` 仓库会变化，因此“第一次在线构建之前”并非逐字节可重现，导出的已验证镜像才是内外网比较的固定工具链。
+源码包、参考 patch 和 Debian 基础镜像都在 [`config.env`](config.env)
+中以 commit、digest 或 SHA-256 固定。在线准备完成后，工具链会导出为普通
+rootfs，在无 Docker、无 sudo 的离线机器复用。`apt` 仓库会变化，因此“第一次
+在线构建之前”并非逐字节可重现；导出的 rootfs、toolchain identity 和清单才是
+内外网比较的固定对象。
 
 评分器不接受 Agent 自己的测试作为通过依据：候选 patch 中对 `tests/` 的修改会被记录，然后从可信基线恢复测试，再叠加隔离的隐藏测试。外部黑盒脚本、隐藏测试、参考 patch、评分脚本和评分日志都不放进 Agent 工作区。
 
-## 2. WSL、Docker 与 Codex 的网络关系
+## 2. Docker、portable 后端与 Agent 边界
 
-推荐 Windows 使用 **WSL2 + Docker Desktop 的 WSL integration**。在 WSL 中执行的是 Linux `docker` CLI，容器由 Docker Desktop 的 Linux engine 运行，不需要在 WSL 里再嵌套一个虚拟机或 Docker-in-Docker。也可以直接在 WSL 安装 Docker Engine，但不要同时混用两个 daemon。
+联网制备机推荐使用 **WSL2 + Docker Desktop 的 WSL integration**。内网机不需要
+Docker：固定工具链镜像在制备机导出为 rootfs，再通过无特权 user、mount、PID
+和 network namespaces 原生运行。
 
 网络分成两层：
 
 ```text
-Codex / 其他 Agent 进程 ──联网──> 云端模型 API
+OpenCode / 其他 Agent 进程 ──内网──> 内网模型 API
              │
-             └──受控工具包装器──> Docker 容器（--network none）
-                                      └──只挂载本次 run/workspace
+             └──受控工具包装器──> Docker 或 rootless namespaces
+                                      └──只绑定本次 run/workspace
 
 独立评分进程 ──> 新建干净源码树 + 候选 patch + 隐藏 oracle
 ```
 
-“离线容器”不等于“Codex 模型离线”。使用云端 Codex 时，Agent 进程仍需访问模型服务；只有编译、搜索源码和测试命令断网。真正的全离线环境还需要内网模型端点及兼容的 Agent 客户端，这不是本实验室替你提供的部分。
+portable 后端使用无特权 user namespace、只读 rootfs 和独立 network namespace；
+它不等同于经过安全审计的容器沙箱。隐藏资产仍依靠外层 Agent 工作目录、工具
+allowlist 和文件权限隔离；不要授予 Agent 任意宿主 shell、实验仓库父目录、其他
+run 或 evaluator 的读取权限。本项目不负责模型调用或凭证配置。
 
 ## 3. 第一次在线准备
 
@@ -64,7 +73,9 @@ docker info
    - 未修改基线必须“构建成功但功能评分失败”；
    - 可信参考 patch 必须通过所有必选门禁。
 
-任一控制不满足，脚本不会生成 `.runtime/evaluator/VERIFIED.json`，也不能创建正式 run。这一设计防止在验证器本身失效时继续得到看似漂亮的模型结果。
+任一控制不满足，脚本不会生成对应后端的
+`.runtime/evaluator/VERIFIED-<backend>.json`，也不能创建正式 run。这一设计
+防止在验证器本身失效时继续得到看似漂亮的模型结果。
 
 ## 4. 创建可恢复的新 run
 
@@ -98,11 +109,12 @@ runs/codex-01/
 执行。遇到上下文压缩或需要新会话前先更新 .agent/STATUS.md。
 ```
 
-容器命令入口：
+命令入口由 `LAB_BACKEND` 选择；默认仍是 Docker：
 
 ```bash
 ./scripts/run_in_toolchain.sh codex-01 bash -lc 'git status --short'
 ./scripts/run_in_toolchain.sh codex-01 bash
+LAB_BACKEND=portable ./scripts/run_in_toolchain.sh codex-01 bash
 ```
 
 实际使用 Codex、Claude Code 或其他 Agent 时，应把 wrapper 配置成它唯一可用的 shell 入口，并把 Agent 的工作目录限定到本次 `workspace`。如果 Agent 仍可任意读取实验仓库父目录、调用原始 Docker socket、访问 Web/GitHub 或查看其他 run，那么“隐藏测试隔离”只是一项文字约定，该次结果应标记为无效。当前脚本提供的是可审计的工具隔离基础，不声称能防御一个已经取得同用户宿主机任意读权限的恶意进程。
@@ -142,9 +154,11 @@ runs/codex-01/evaluation/
 ./scripts/summarize_runs.sh
 ```
 
-同一个模型至少重复 3 次，固定首条指令、Agent 版本、权限、预算和 image ID。除 `resolved` 外，还应比较总耗时、调用/费用、人工干预、状态文件质量、重复探索次数和独立评分与 Agent 自报结果的差异。
+同一个模型至少重复 3 次，固定首条指令、Agent 版本、权限、预算和 toolchain
+identity。除 `resolved` 外，还应比较总耗时、调用/费用、人工干预、状态文件质量、
+重复探索次数和独立评分与 Agent 自报结果的差异。
 
-## 6. 离线迁移与重新开始
+## 6. 制作和导入 portable bundle
 
 联网 WSL 在通过控制实验后导出：
 
@@ -152,14 +166,34 @@ runs/codex-01/evaluation/
 ./scripts/export_offline_bundle.sh ~/curl-variable-bundle
 ```
 
-把整个 `agentStudy` 仓库和 bundle 目录传到内网 WSL/Linux。内网无需访问 GitHub 或软件源：
+bundle 包含普通 rootfs、curl 源码、私有评分资产、配置和完整 SHA-256 清单，
+不包含 Docker image tar。传输前可按组织要求做
+审批扫描；不要把 bundle 目录交给 Agent。
+
+把当前版本的 `agentStudy` 仓库和 bundle 目录传到内网 Linux。内网无需 Docker、
+sudo、GitHub、软件源或 Python 3.11：
 
 ```bash
 cd ~/work/agentStudy/lab/curl-variable-long-task
 ./scripts/import_offline_bundle.sh ~/curl-variable-bundle
 ```
 
-导入会重新校验 bundle、加载镜像，并在目标机器再次运行正负控制。模型是否可用仍取决于内网是否允许访问云端 API，或是否已经配置内网模型服务。
+导入会在任何解包前校验所有 artifact，再安装只读 rootfs，并运行 doctor 和
+portable 正负控制：
+
+```bash
+LAB_BACKEND=portable ./scripts/portable_doctor.sh
+LAB_BACKEND=portable ./scripts/new_run.sh opencode-01
+LAB_BACKEND=portable ./scripts/run_in_toolchain.sh opencode-01 bash
+```
+
+手动启动 OpenCode 时，把工作目录严格设置为输出的
+`runs/opencode-01/workspace`，只允许调用上述 wrapper。收集和评分：
+
+```bash
+./scripts/collect_patch.sh opencode-01 "opencode + exact-model-id"
+LAB_BACKEND=portable ./scripts/evaluate.sh opencode-01
+```
 
 要恢复初始状态，不要删除或覆盖旧 run；创建新 ID：
 
@@ -175,6 +209,10 @@ cd ~/work/agentStudy/lab/curl-variable-long-task
 - 隐藏测试与黑盒 oracle 只能覆盖已编码行为，不能证明不存在所有回归或安全问题。
 - ASan/UBSan 只覆盖本次实际运行的路径；`--full` 仍不是形式化验证。
 - Docker 隔离控制的是命令执行面；模型请求、Agent 客户端和宿主文件权限必须单独配置。
+- portable 后端依赖内核允许无特权 user、mount、PID 和 network namespaces；
+  某些加固环境会禁用这些能力。它当前不设置 CPU/内存 cgroup。
+- `portable_doctor.sh` 检查架构、磁盘、`noexec`、Git、清单、namespace、只读
+  rootfs 和 ASan/UBSan smoke；目标内网环境仍必须实际跑完正负控制。
 - 工具链资源上限、超时和选定回归是实验参数。比较模型时必须保持一致并记录。
 - 独立评分证明 patch 达到本实验的技术门禁，最终代码质量、可维护性和真实需求仍需人工 review。
 

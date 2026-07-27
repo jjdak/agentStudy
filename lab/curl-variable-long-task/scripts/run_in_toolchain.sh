@@ -17,17 +17,5 @@ if [ "$#" -eq 0 ]; then
     set -- bash
 fi
 
-mapfile -t security_args < <(container_common_args)
-tty_args=()
-if [ -t 0 ] && [ -t 1 ]; then
-    tty_args=(-t)
-fi
-exec docker run --rm -i \
-    "${tty_args[@]}" \
-    "${security_args[@]}" \
-    --user "$(id -u):$(id -g)" \
-    --env HOME=/home/agent \
-    --env LANG=C.UTF-8 \
-    --workdir /workspace \
-    --mount "type=bind,src=$workspace,dst=/workspace" \
-    "$IMAGE_REF" "$@"
+printf -v command_text '%q ' "$@"
+backend_run "$workspace" true "$command_text"

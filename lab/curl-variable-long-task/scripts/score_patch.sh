@@ -71,7 +71,6 @@ if [ "$patch_exit" -eq 0 ]; then
     git -C "$source_tree" clean -q -f -d -- tests
 fi
 
-mapfile -t security_args < <(container_common_args)
 run_stage() {
     local timeout_seconds=$1
     local log_file=$2
@@ -79,18 +78,10 @@ run_stage() {
     shift 3
     local stage_started stage_exit
     stage_started=$(date +%s)
+    require_backend
     timeout --foreground --kill-after=15s "${timeout_seconds}s" \
-        docker run --rm \
-        "${security_args[@]}" \
-        --user "$(id -u):$(id -g)" \
-        --env HOME=/home/agent \
-        --env LANG=C.UTF-8 \
-        --env ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 \
-        --env UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
-        --workdir /workspace \
-        --mount "type=bind,src=$source_tree,dst=/workspace" \
-        "$@" \
-        "$IMAGE_REF" bash -lc "$command_text" \
+        "$SCRIPT_DIR/backend_${BACKEND}.sh" \
+        "$source_tree" false "$command_text" "$@" \
         >"$log_file" 2>&1
     stage_exit=$?
     LAST_STAGE_SECONDS=$(($(date +%s) - stage_started))
@@ -109,9 +100,10 @@ cd build-lab
   --without-ssl --without-libpsl --without-zlib --without-brotli \
   --without-zstd --without-libidn2 --disable-ldap --disable-ldaps \
   --disable-manual --disable-dependency-tracking \
-  CFLAGS='-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer' \
-  LDFLAGS='-fsanitize=address,undefined'
-make -j4
+  curl_cv_writable_argv=no
+make -j4 \
+  CFLAGS='-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-pie' \
+  LDFLAGS='-fsanitize=address,undefined -no-pie'
 cd ..
 rm -rf build-cmake
 cmake -S . -B build-cmake \
@@ -119,8 +111,10 @@ cmake -S . -B build-cmake \
   -DCURL_ENABLE_SSL=OFF -DCURL_USE_LIBPSL=OFF -DUSE_LIBIDN2=OFF \
   -DCURL_USE_LIBSSH2=OFF -DENABLE_MANUAL=OFF \
   -DCMAKE_DISABLE_FIND_PACKAGE_ZLIB=TRUE \
-  -DCMAKE_C_FLAGS='-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer' \
-  -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=address,undefined'
+  -DHAVE_WRITABLE_ARGV=0
+cmake -S . -B build-cmake \
+  -DCMAKE_C_FLAGS='-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-pie' \
+  -DCMAKE_EXE_LINKER_FLAGS='-fsanitize=address,undefined -no-pie'
 cmake --build build-cmake --parallel 4
 EOF
 )
@@ -132,8 +126,8 @@ fi
 
 if $build_passed; then
     run_stage "$LAB_TEST_TIMEOUT" "$result_dir/03-black-box.log" \
-        'CURL_BIN=/workspace/build-lab/src/curl /black_box_tests.sh' \
-        --mount "type=bind,src=$EVALUATOR_DIR/black_box_tests.sh,dst=/black_box_tests.sh,readonly"
+        'CURL_BIN=/workspace/build-lab/src/curl /opt/agentstudy/black_box_tests.sh' \
+        "$EVALUATOR_DIR/black_box_tests.sh:/opt/agentstudy/black_box_tests.sh:ro"
     black_box_exit=$?
     black_box_seconds=$LAST_STAGE_SECONDS
     [ "$black_box_exit" -eq 0 ] && black_box_passed=true
@@ -141,13 +135,14 @@ if $build_passed; then
     for test_id in $LAB_HIDDEN_TESTS; do
         cp "$HIDDEN_TEST_DIR/test${test_id}" "$source_tree/tests/data/test${test_id}"
     done
-    hidden_command="make -C build-lab test TFLAGS='-a -s $LAB_HIDDEN_TESTS'"
+    test_build_flags="CFLAGS='-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-pie' LDFLAGS='-fsanitize=address,undefined -no-pie'"
+    hidden_command="make -C build-lab $test_build_flags test TFLAGS='-a -s $LAB_HIDDEN_TESTS'"
     run_stage "$LAB_TEST_TIMEOUT" "$result_dir/04-hidden-tests.log" "$hidden_command"
     hidden_exit=$?
     hidden_seconds=$LAST_STAGE_SECONDS
     [ "$hidden_exit" -eq 0 ] && hidden_passed=true
 
-    regression_command="make -C build-lab test TFLAGS='-a -s $LAB_REGRESSION_TESTS'"
+    regression_command="make -C build-lab $test_build_flags test TFLAGS='-a -s $LAB_REGRESSION_TESTS'"
     run_stage "$LAB_TEST_TIMEOUT" "$result_dir/05-regression-tests.log" "$regression_command"
     regression_exit=$?
     regression_seconds=$LAST_STAGE_SECONDS
@@ -155,7 +150,7 @@ if $build_passed; then
 
     if $full_requested; then
         run_stage "$LAB_TEST_TIMEOUT" "$result_dir/06-full-regression.log" \
-            "make -C build-lab test TFLAGS='-a -s'"
+            "make -C build-lab $test_build_flags test TFLAGS='-a -s'"
         full_exit=$?
         full_seconds=$LAST_STAGE_SECONDS
         [ "$full_exit" -eq 0 ] && full_passed=true
@@ -179,8 +174,8 @@ fi
 jq -n \
     --arg evaluated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --arg patch_sha256 "$(sha256_file "$patch_file")" \
-    --arg image_ref "$IMAGE_REF" \
-    --arg image_id "$(image_id)" \
+    --arg backend "$BACKEND" \
+    --arg toolchain_identity "$(toolchain_identity)" \
     --argjson patch_applied "$patch_applied" \
     --argjson build_passed "$build_passed" \
     --argjson black_box_passed "$black_box_passed" \
@@ -203,7 +198,7 @@ jq -n \
     --argjson full_seconds "$full_seconds" \
     --argjson resolved "$resolved" \
     '{evaluated_at:$evaluated_at,patch_sha256:$patch_sha256,
-      image_ref:$image_ref,image_id:$image_id,
+      backend:$backend,toolchain_identity:$toolchain_identity,
       patch_applied:$patch_applied,build_passed:$build_passed,
       black_box_passed:$black_box_passed,upstream_hidden_passed:$hidden_passed,
       regression_passed:$regression_passed,

@@ -37,14 +37,15 @@ jq -n \
     --arg base_commit "$LAB_BASE_COMMIT" \
     --arg source_sha256 "$LAB_SOURCE_SHA256" \
     --arg prompt_sha256 "$(sha256_file "$LAB_ROOT/task/agent_task.md")" \
-    --arg image_ref "$IMAGE_REF" \
-    --arg image_id "$(image_id)" \
+    --arg backend "$BACKEND" \
+    --arg toolchain_identity "$(toolchain_identity)" \
     --arg baseline_head "$baseline_head" \
     --arg baseline_tree "$baseline_tree" \
     --arg exclude_sha256 "$exclude_sha256" \
     '{run_id:$run_id,created_at:$created_at,task_id:$task_id,
       base_commit:$base_commit,source_sha256:$source_sha256,
-      prompt_sha256:$prompt_sha256,image_ref:$image_ref,image_id:$image_id,
+      prompt_sha256:$prompt_sha256,backend:$backend,
+      toolchain_identity:$toolchain_identity,
       baseline_head:$baseline_head,baseline_tree:$baseline_tree,
       exclude_sha256:$exclude_sha256}' \
     >"$run_dir/metadata.json"
@@ -57,3 +58,5 @@ printf 'run created: %s\n' "$run_id"
 printf 'Agent-visible workspace: %s\n' "$run_dir/workspace"
 printf 'Task contract: %s\n' "$run_dir/workspace/.agent/TASK.md"
 printf 'Tool wrapper: %s %s <command...>\n' "$SCRIPT_DIR/run_in_toolchain.sh" "$run_id"
+printf 'Backend: %s\n' "$BACKEND"
+printf 'Start OpenCode manually with its working directory set to: %s\n' "$run_dir/workspace"

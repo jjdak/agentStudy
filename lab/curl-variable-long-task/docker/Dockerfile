@@ -15,6 +15,7 @@ RUN apt-get update \
         file \
         gdb \
         git \
+        iproute2 \
         jq \
         libtool \
         locales \

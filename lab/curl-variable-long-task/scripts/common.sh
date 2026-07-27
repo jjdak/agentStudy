@@ -17,6 +17,10 @@ EVALUATOR_DIR="$RUNTIME_DIR/evaluator"
 HIDDEN_TEST_DIR="$EVALUATOR_DIR/hidden-tests"
 RUNS_DIR="$LAB_ROOT/runs"
 IMAGE_REF="${LAB_IMAGE_REPOSITORY}:${LAB_IMAGE_TAG}"
+BACKEND=${LAB_BACKEND:-docker}
+PORTABLE_DIR="$RUNTIME_DIR/portable"
+PORTABLE_ROOTFS="$PORTABLE_DIR/rootfs"
+PORTABLE_IDENTITY="$PORTABLE_DIR/toolchain-identity.json"
 
 die() {
     printf 'error: %s\n' "$*" >&2
@@ -74,6 +78,13 @@ require_docker() {
     docker info >/dev/null 2>&1 || die "Docker daemon is not reachable"
 }
 
+require_backend_name() {
+    case "$BACKEND" in
+        docker|portable) ;;
+        *) die "LAB_BACKEND must be docker or portable; got: $BACKEND" ;;
+    esac
+}
+
 require_downloads() {
     [ -f "$SOURCE_ARCHIVE" ] || die "source archive is missing; run scripts/prepare_online.sh"
     [ -f "$GOLD_PATCH" ] || die "trusted reference patch is missing; run scripts/prepare_online.sh"
@@ -84,9 +95,7 @@ require_downloads() {
 require_scoring_assets() {
     require_linux_x86_64
     require_downloads
-    require_docker
-    docker image inspect "$IMAGE_REF" >/dev/null 2>&1 \
-        || die "fixed toolchain image is not loaded: $IMAGE_REF"
+    require_backend
     [ -x "$EVALUATOR_DIR/black_box_tests.sh" ] \
         || die "evaluator assets are missing; run scripts/prepare_online.sh"
     [ -f "$EVALUATOR_DIR/hidden-tests.sha256" ] \
@@ -99,17 +108,24 @@ require_scoring_assets() {
 
 require_prepared() {
     require_scoring_assets
-    [ -f "$EVALUATOR_DIR/VERIFIED.json" ] \
+    local verified
+    verified=$(verified_file)
+    [ -f "$verified" ] \
         || die "evaluator controls have not passed; run scripts/verify_evaluator.sh"
     require_command jq
-    [ "$(jq -r .oracle_sha256 "$EVALUATOR_DIR/VERIFIED.json")" \
+    [ "$(jq -r .oracle_sha256 "$verified")" \
         = "$(sha256_file "$EVALUATOR_DIR/black_box_tests.sh")" ] \
         || die "black-box oracle changed after evaluator verification"
-    [ "$(jq -r .hidden_manifest_sha256 "$EVALUATOR_DIR/VERIFIED.json")" \
+    [ "$(jq -r .hidden_manifest_sha256 "$verified")" \
         = "$(sha256_file "$EVALUATOR_DIR/hidden-tests.sha256")" ] \
         || die "hidden-test manifest changed after evaluator verification"
-    [ "$(jq -r .image_id "$EVALUATOR_DIR/VERIFIED.json")" = "$(image_id)" ] \
-        || die "toolchain image changed after evaluator verification"
+    [ "$(jq -r .toolchain_identity "$verified")" \
+        = "$(toolchain_identity)" ] \
+        || die "toolchain changed after evaluator verification"
+}
+
+verified_file() {
+    printf '%s/VERIFIED-%s.json\n' "$EVALUATOR_DIR" "$BACKEND"
 }
 
 validate_run_id() {
@@ -140,6 +156,50 @@ init_snapshot_repo() {
 
 image_id() {
     docker image inspect --format '{{.Id}}' "$IMAGE_REF"
+}
+
+require_backend() {
+    require_backend_name
+    case "$BACKEND" in
+        docker)
+            require_docker
+            docker image inspect "$IMAGE_REF" >/dev/null 2>&1 \
+                || die "fixed toolchain image is not loaded: $IMAGE_REF"
+            ;;
+        portable)
+            for command_name in chroot mount unshare; do
+                require_command "$command_name"
+            done
+            [ -d "$PORTABLE_ROOTFS" ] \
+                || die "portable rootfs is missing; import a portable bundle"
+            [ -f "$PORTABLE_IDENTITY" ] \
+                || die "portable toolchain identity is missing"
+            [ -f "$PORTABLE_DIR/runtime-manifest.sha256" ] \
+                || die "portable runtime manifest is missing"
+            (
+                cd "$PORTABLE_DIR"
+                sha256sum -c runtime-manifest.sha256 >/dev/null
+            ) || die "portable runtime integrity check failed"
+            ;;
+    esac
+}
+
+toolchain_identity() {
+    require_backend_name
+    case "$BACKEND" in
+        docker) image_id ;;
+        portable) jq -r .identity "$PORTABLE_IDENTITY" ;;
+    esac
+}
+
+backend_run() {
+    local workspace=$1
+    local interactive=$2
+    local command_text=$3
+    shift 3
+    require_backend
+    "$SCRIPT_DIR/backend_${BACKEND}.sh" \
+        "$workspace" "$interactive" "$command_text" "$@"
 }
 
 container_common_args() {
