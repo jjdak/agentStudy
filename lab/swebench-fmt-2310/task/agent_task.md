@@ -1,38 +1,39 @@
-# Coding Agent task: `fmtlib__fmt-2310`
+# Coding Agent 任务：`fmtlib__fmt-2310`
 
-You are working in a clean snapshot of the `fmtlib/fmt` repository before the issue was fixed.
+你正在 fmt 修复该问题之前的 `fmtlib/fmt` 干净源码快照中工作。
 
-## Problem statement
+## 问题描述
 
-### Numeric zero fill is applied to inf/nan
+### 数值零填充错误地作用于 inf/nan
 
-From the documentation:
-
-> Preceding the width field by a zero (`0`) character enables sign-aware zero-padding for numeric types. It forces the padding to be placed after the sign or base (if any) but before the digits. This is used for printing fields in the form `+000000120`. This option is only valid for numeric types and it has no effect on formatting of infinity and NaN.
+根据文档，宽度字段前的零字符（`0`）会为数值类型启用符号感知的零填充。
+填充内容应位于符号或进制前缀之后、数字之前，例如 `+000000120`。该选项仅对
+数值类型有效，并且不应影响无穷大和 NaN 的格式化。
 
 ```cpp
 fmt::print("'{:+06}'\n", NAN);
-// output: '00+nan'
+// 当前输出：'00+nan'
 ```
 
-## Working requirements
+## 工作要求
 
-1. Inspect the repository and reproduce or locate the behavior before editing.
-2. Explain the relevant formatting path and the first point where behavior diverges from the documented rule.
-3. Implement the smallest maintainable fix that preserves existing finite-number formatting.
-4. Do not access the network, Git remotes, tags, upstream history, reference patches, hidden tests, or other runs.
-5. Do not delete, skip, weaken, or special-case tests to obtain a pass. Do not change public behavior unrelated to this issue.
-6. Run the most relevant public tests available in the repository. Distinguish checks actually run from checks not run.
-7. Do not commit or push.
+1. 修改前检查仓库并复现或定位该行为。
+2. 解释相关格式化路径，以及行为第一次偏离文档规则的位置。
+3. 实现尽可能小且易维护的修复，同时保持有限数值的现有格式化行为。
+4. 不得访问网络、Git 远端、标签、上游历史、参考补丁、隐藏测试或其他 run。
+5. 不得通过删除、跳过、削弱或特判测试来获得通过；不得改变与本问题无关的公开行为。
+6. 运行仓库中最相关的公开测试，明确区分实际运行的检查和尚未运行的检查。
+7. 不要提交或推送代码。
 
-## Final report
+## 最终报告
 
-Return:
+请报告：
 
-- root cause and affected code path;
-- files changed and why;
-- commands run with outcomes;
-- checks not run and why;
-- remaining risks or assumptions.
+- 根因及受影响的代码路径；
+- 修改了哪些文件以及原因；
+- 实际运行的命令和结果；
+- 未运行的检查及原因；
+- 剩余风险或假设。
 
-The final patch will be evaluated outside your workspace with the fixed SWE-bench test oracle. Do not claim that hidden evaluation passed.
+最终补丁将在 workspace 外使用固定的 SWE-bench 测试 oracle 评估。不要声称隐藏
+评估已经通过。

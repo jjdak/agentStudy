@@ -1,40 +1,35 @@
-# Demo task: add command-line variables to curl
+# Demo 任务：为 curl 增加命令行变量
 
-This is a large teaching exercise based on curl's command-line variable
-feature. The snapshot predates the implementation.
+这是一个基于 curl 命令行变量功能的大型教学练习。当前源码快照早于该功能的
+正式实现。
 
-## Goal
+## 目标
 
-Implement enough of the feature to make steady, observable progress across a
-large C repository:
+实现以下功能，以便在大型 C 语言仓库中持续取得可观察的进展：
 
-- `--variable name=value`;
-- environment and file imports;
-- `--expand-<option>` with `{{name}}`;
-- `trim`, `json`, `url`, and `b64` transformations;
-- help, standalone documentation, build integration, ownership, and cleanup.
+- `--variable name=value`；
+- 从环境变量和文件导入值；
+- 使用 `{{name}}` 展开的 `--expand-<option>`；
+- `trim`、`json`、`url` 和 `b64` 变换；
+- 帮助信息、独立文档、构建集成、内存所有权和资源释放。
 
-The full behavioral contract remains in `.agent/SPEC.md`. Use the other
-`.agent/*.md` files to record the repository map, design, work packages, and
-status between sessions.
+完整行为合同位于 `.agent/SPEC.md`。请使用其他 `.agent/*.md` 文件记录仓库地图、
+设计、工作包和跨会话进度。
 
-## Suggested learning path
+## 建议学习流程
 
-1. Run the visible black-box test before editing and record the failure.
-2. Map option generation, command parsing, transfer configuration, cleanup,
-   documentation, and tests.
-3. Split the implementation into work packages.
-4. Build and run the visible checks after each coherent change.
-5. Compare your design and patch with the upstream reference implementation.
+1. 修改前运行可见黑盒测试并记录失败。
+2. 梳理选项生成、命令解析、传输配置、资源释放、文档和测试。
+3. 将实现拆分成较小的工作包。
+4. 每完成一组连贯修改，就重新构建并运行可见检查。
+5. 将自己的设计和补丁与公开的上游参考实现比较。
 
-This demo intentionally does not hide the oracle or reference answer. From the
-Lab directory:
+本 Demo 有意不隐藏测试 oracle 或参考答案。在 Lab 目录中可以执行：
 
 ```bash
 ./scripts/demo.sh test demo-large
 ./scripts/demo.sh answer demo-large --show
 ```
 
-There is no Docker, network isolation, hidden scoring, or requirement to treat
-the result as a model benchmark. The purpose is to practice long-task state and
-cross-module engineering.
+本任务不使用 Docker、网络隔离或隐藏评分，也不要求将结果当作模型能力基准。
+练习重点是长任务状态管理和跨模块工程能力。

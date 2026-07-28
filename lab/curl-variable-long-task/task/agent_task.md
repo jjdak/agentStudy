@@ -1,49 +1,61 @@
-# Task: add command-line variables and option expansion to curl
+# 任务：为 curl 增加命令行变量和选项展开
 
-Implement a complete user-facing variable facility in this curl snapshot. This is a repository-scale task: it crosses command parsing, generated option metadata, ownership/cleanup, documentation, build integration and tests.
+请在当前 curl 源码快照中实现一套完整、面向用户的变量功能。这是一个仓库级任务，
+涉及命令解析、生成式选项元数据、内存所有权与清理、文档、构建集成和测试。
 
-## Required behavior
+## 必须实现的行为
 
-1. Add `--variable <name=value>` and `--variable <name@file>`. A file name of `-` reads the value from standard input.
-2. Add environment import forms:
-   - `--variable %name` requires the environment variable to exist;
-   - `--variable %name=default` and `%name@default-file` use the fallback only when it does not exist.
-3. A later assignment of the same name replaces the earlier value.
-4. For every long command-line option whose argument is a string, accept an `--expand-<option>` form. Expand `{{name}}` references in that option argument; an unknown variable expands to an empty string.
-5. `\{{name}}` is literal `{{name}}`. Invalid names, overlong names and unbalanced braces must be handled without unsafe reads or writes and with behavior consistent with curl's command-line error conventions.
-6. Support left-to-right transformation chains written with colons:
-   - `trim`: remove leading and trailing whitespace;
-   - `json`: JSON-string escape the value without adding surrounding quotes;
-   - `url`: percent-encode the value;
-   - `b64`: Base64-encode the value.
-7. Reject unknown transformations. Reject an unencoded NUL byte when expansion would insert it into a command-line string.
-8. Integrate help text and standalone option documentation. Preserve existing command-line behavior, including config files and `--next`.
-9. Correctly own and release all variable data. Do not add a dependency or change a public libcurl API/ABI.
+1. 增加 `--variable <name=value>` 和 `--variable <name@file>`；文件名为 `-`
+   时从标准输入读取值。
+2. 增加以下环境变量导入形式：
+   - `--variable %name` 要求该环境变量必须存在；
+   - `--variable %name=default` 和 `%name@default-file` 仅在环境变量不存在时
+     使用后备值。
+3. 同名变量被多次赋值时，后一次值替换前一次值。
+4. 对每个参数类型为字符串的长命令行选项，接受对应的 `--expand-<option>`
+   形式；展开该选项参数中的 `{{name}}`，未知变量展开为空字符串。
+5. `\{{name}}` 表示字面量 `{{name}}`。对于非法名称、过长名称和未配对的大括号，
+   必须避免不安全的读写，并按照 curl 的命令行错误惯例处理。
+6. 支持使用冒号连接、从左到右执行的变换链：
+   - `trim`：删除首尾空白；
+   - `json`：按照 JSON 字符串规则转义，但不添加外围引号；
+   - `url`：对值进行百分号编码；
+   - `b64`：对值进行 Base64 编码。
+7. 拒绝未知变换。如果展开会向命令行字符串插入未经编码的 NUL 字节，也必须拒绝。
+8. 集成帮助文本和独立选项文档。保持现有命令行行为，包括配置文件和 `--next`。
+9. 正确持有并释放所有变量数据。不得新增依赖，也不得改变公开的 libcurl API/ABI。
 
-Examples use a local URL only to make `--write-out` execute:
+下面的示例仅使用本地 URL，以便触发 `--write-out`：
 
 ```console
 curl --variable name=world --expand-write-out 'hello {{name}}' -o /dev/null file:///dev/null
 curl --variable 'text=  a b  ' --expand-write-out '{{text:trim:url}}' -o /dev/null file:///dev/null
 ```
 
-## Working contract
+## 工作合同
 
-- Work only in this repository snapshot. Do not use the network, a remote, hidden tests, an upstream patch, release code or another run's files. Do not commit, change branches, rewrite history, alter remotes or edit `.git/info/exclude`; staging is allowed.
-- You may modify source, build metadata, documentation and repository tests. Do not disable existing tests, sanitizers or warnings.
-- Use `.agent/REPO_MAP.md`, `SPEC.md`, `DESIGN.md`, `TASKS.md` and `STATUS.md` as durable state. Update `STATUS.md` before a context reset or handoff.
-- First map the repository and turn the requirements into a specification. Then make small work packages with observable completion checks. Implement only after the affected components and build integration are understood.
-- Use the provided toolchain wrapper for commands. It has no network and can see only this workspace. Do not attempt to access Docker or host paths directly.
-- Run focused checks after each work package. Before completion, build from a clean build directory and run all relevant public tests you can afford.
-- A command attempt is not a passing check. Record command, exit status and result. If a required check cannot run, report it as unverified.
-- Do not claim that independent or hidden evaluation passed; you cannot see or run it.
+- 只在当前仓库快照中工作。不得使用网络、远端、隐藏测试、上游补丁、发布版代码或
+  其他 run 的文件。不要提交、切换分支、重写历史、修改远端或编辑
+  `.git/info/exclude`；允许暂存文件。
+- 可以修改源码、构建元数据、文档和仓库测试。不得禁用现有测试、sanitizer 或警告。
+- 使用 `.agent/REPO_MAP.md`、`SPEC.md`、`DESIGN.md`、`TASKS.md` 和
+  `STATUS.md` 保存持久状态。在上下文重置或交接之前更新 `STATUS.md`。
+- 先绘制仓库地图，并将要求整理为规格；然后拆分为带有可观察验收条件的小工作包。
+  只有理解受影响组件和构建集成后，才开始实现。
+- 使用提供的工具链包装器运行命令。它没有网络，只能访问当前 workspace。不要尝试
+  直接访问 Docker 或宿主机路径。
+- 每完成一个工作包就运行聚焦检查。完成前应从干净构建目录构建，并运行资源允许的
+  所有相关公开测试。
+- 尝试执行命令不等于检查通过。记录命令、退出状态和结果；无法运行的必要检查必须
+  标记为尚未验证。
+- 不要声称独立评估或隐藏评估已经通过，因为你无法查看或运行它们。
 
-## Completion report
+## 完成报告
 
-Report:
+请报告：
 
-1. the implemented behavior and main design decisions;
-2. files and subsystems changed;
-3. exact build/test commands and exit status;
-4. checks not run and why;
-5. remaining risks and the next highest-value verification.
+1. 已实现行为和主要设计决策；
+2. 修改的文件及子系统；
+3. 准确的构建/测试命令和退出状态；
+4. 未运行的检查及原因；
+5. 剩余风险和下一项最有价值的验证。

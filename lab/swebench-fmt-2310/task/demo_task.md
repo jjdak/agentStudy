@@ -1,19 +1,19 @@
-# Demo task: fix zero padding for `inf` and `nan`
+# Demo 任务：修复 `inf` 和 `nan` 的零填充
 
-This is a teaching exercise based on `fmtlib__fmt-2310`. The repository is a
-clean fmt snapshot from before the fix.
+这是一个基于 `fmtlib__fmt-2310` 的教学练习。当前仓库是 fmt 修复该问题之前的
+干净源码快照。
 
-## Problem
+## 问题描述
 
-The `0` option enables sign-aware zero padding for finite numeric values, but
-the documentation says it has no effect on infinity and NaN:
+格式选项 `0` 会为有限数值启用符号感知的零填充，但文档规定它不应影响无穷大
+和 NaN：
 
 ```cpp
-fmt::format("{:+06}", 12)   // "+00012" (keep this behavior)
-fmt::format("{:+06}", NAN)  // currently "00+nan", should be "  +nan"
+fmt::format("{:+06}", 12)   // "+00012"（必须保持此行为）
+fmt::format("{:+06}", NAN)  // 当前为 "00+nan"，应为 "  +nan"
 ```
 
-Explicit alignment must still work:
+显式对齐方式也必须继续生效：
 
 ```text
 {:<+06}  -> "+nan  "
@@ -21,14 +21,13 @@ Explicit alignment must still work:
 {:>+06}  -> "  +nan"
 ```
 
-## Suggested workflow
+## 建议流程
 
-1. Reproduce the failure before editing.
-2. Trace parsing of the zero option and formatting of non-finite values.
-3. Make the smallest maintainable change.
-4. Run the demo smoke test and inspect the diff.
-5. Explain the root cause and why finite values are unchanged.
+1. 修改前先复现失败。
+2. 跟踪零填充选项的解析过程，以及非有限数值的格式化过程。
+3. 实现尽可能小且易维护的修复。
+4. 运行 Demo 的可见冒烟测试并检查差异。
+5. 解释根因，并说明为什么有限数值的行为不会改变。
 
-This demo intentionally has no hidden tests or isolation requirement. The
-reference answer is available from the Lab's `scripts/demo.sh answer` command;
-try the task first if you want the debugging practice.
+本 Demo 有意不设置隐藏测试或隔离要求。可以通过 Lab 的
+`scripts/demo.sh answer` 命令查看参考答案；如果希望练习调试，建议先自行完成。

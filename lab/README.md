@@ -8,6 +8,35 @@ Bubblewrap、Python 评测框架或严格沙箱；测试和参考答案都是可
 | [fmt 小型修复](swebench-fmt-2310/README.md) | 约 2 个核心文件 | 复现、定位、最小修复、回归 | `c++`、Git、curl、tar | 15～40 分钟 |
 | [curl 大型功能](curl-variable-long-task/README.md) | 参考实现约 32 个文件 | 仓库地图、规格、分包、状态外置、跨会话恢复 | C 工具链、Autotools、Perl | 2～8 小时 |
 
+## 两个代码问题
+
+### fmt：`inf`/`nan` 被错误地零填充
+
+fmt 的 `0` 格式选项应该只对有限数值执行符号感知的零填充，但当前快照错误地把
+它应用到了无穷大和 NaN：
+
+```cpp
+fmt::format("{:+06}", 12)   // 正确："+00012"
+fmt::format("{:+06}", NAN)  // 错误："00+nan"，期望："  +nan"
+```
+
+练习目标是追踪格式解析和非有限数值输出路径，完成最小修复，同时保持有限数值及
+显式左、中、右对齐行为不变。
+
+### curl：缺少命令行变量和选项展开
+
+当前 curl 快照不能定义变量，也不能在字符串选项中引用变量。练习目标是增加
+`--variable` 和 `--expand-<option>`，例如：
+
+```console
+curl --variable name=world \
+  --expand-write-out 'hello {{name}}' \
+  -o /dev/null file:///dev/null
+```
+
+完整实现还包括环境变量/文件导入、`trim/json/url/b64` 变换链、错误处理、帮助与
+独立文档、生成式选项元数据、构建集成，以及变量内存的持有与释放。
+
 ## 小型 Demo
 
 ```bash
