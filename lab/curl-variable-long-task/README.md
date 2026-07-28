@@ -10,6 +10,50 @@
 
 这不是当前模型能力的通用排行榜。任务及历史实现是公开资料，可能存在训练污染；一次通过也只表示满足本实验的 oracle。
 
+## 首选：无 Docker 长任务 Demo
+
+这个模式直接在宿主机生成 Autotools 文件、构建最小功能集的 curl，并执行仓库中
+可见的 15 项黑盒检查。它没有 Docker、Bubblewrap、隐藏测试或严格隔离，参考
+实现也是公开的；重点是练习仓库地图、规格、工作包、状态外置和跨会话恢复。
+
+Ubuntu/Debian 安装普通编译依赖：
+
+```bash
+sudo apt-get install \
+  build-essential autoconf automake libtool pkg-config perl curl git
+```
+
+完整演示：
+
+```bash
+cd lab/curl-variable-long-task
+./scripts/demo.sh check
+./scripts/demo.sh new demo-large
+./scripts/demo.sh test demo-large        # 基线构建成功，功能检查应失败
+
+codex -C "$PWD/demo-runs/demo-large/workspace"
+
+./scripts/demo.sh test demo-large
+./scripts/demo.sh test demo-large --regression
+./scripts/demo.sh answer demo-large      # 显示完整上游参考 patch
+```
+
+如果要快速验证整个教学装置：
+
+```bash
+./scripts/demo.sh answer demo-large --apply
+./scripts/demo.sh test demo-large
+```
+
+首次 `new` 会下载约 3 MB 的固定源码和约 90 KB 的公开答案。之后可以离线重复创建
+run。测试入口会执行干净重编，默认并行度为 2；可用
+`DEMO_JOBS=4 ./scripts/demo.sh test demo-large` 调整。
+
+## 进阶：容器化可重复评估
+
+以下原流程使用固定 Docker 工具链、隐藏测试、正负控制和独立评分。它适合研究
+严谨实验设计，但不是学习大型 Agent 工作流的前置条件。
+
 ## 1. 固定对象与评分边界
 
 | 项目 | 固定值 |

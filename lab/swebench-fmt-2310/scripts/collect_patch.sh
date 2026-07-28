@@ -22,7 +22,9 @@ PREDICTION_FILE="$RUN_DIR/prediction.json"
 [ ! -e "$PATCH_FILE" ] || die "patch already collected; create a new run instead of overwriting $PATCH_FILE"
 
 # Intent-to-add makes new files visible to git diff without staging their contents.
-git -C "$WORKSPACE" add --intent-to-add --all --force
+# Respect .gitignore so generated build trees are not collected as model edits.
+# Files tracked in the baseline remain visible even if an ignore rule matches.
+git -C "$WORKSPACE" add --intent-to-add --all
 git -C "$WORKSPACE" diff --binary HEAD -- . >"$PATCH_FILE"
 
 [ -s "$PATCH_FILE" ] || die "Agent produced an empty patch"

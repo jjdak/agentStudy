@@ -60,6 +60,7 @@ export PIP_DISABLE_PIP_VERSION_CHECK=1
     --no-index \
     --find-links "$BUNDLE_DIR/wheelhouse" \
     --no-deps \
+    --editable \
     "$HARNESS_DIR"
 
 docker load --input "$BUNDLE_DIR/instance-image.tar"

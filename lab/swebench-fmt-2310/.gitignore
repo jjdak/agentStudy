@@ -1,5 +1,7 @@
 .runtime/
 runs/
+.demo/
+demo-runs/
 offline-bundles/
 *.tar
 *.tar.gz

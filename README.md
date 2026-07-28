@@ -29,8 +29,9 @@ docs/
 └── 03_personal_practice.md    # 模板、检查清单与标准任务练习
 
 html/                          # 三篇文档的 HTML 阅读版及 01 分页演示版
-lab/swebench-fmt-2310/         # Linux + Docker 的局部缺陷修复标准任务
-lab/curl-variable-long-task/   # curl 跨模块长任务与可重复独立评分
+lab/swebench-fmt-2310/         # fmt 局部缺陷 Demo；可选严格 SWE-bench 模式
+lab/curl-variable-long-task/   # curl 跨模块 Demo；可选容器化独立评分
+lab/README.md                  # 一大一小两个无 Docker 教学 Demo 入口
 references/                    # 论文、官方资料与基准选择依据
 ```
 
@@ -45,9 +46,12 @@ references/                    # 论文、官方资料与基准选择依据
 | 3 | 30 分钟 | 仓库入口、工作模式与 Issue 式 Prompt | 写出一个可执行任务要求 |
 | 4 | 30 分钟 | 执行纠偏、根因诊断与最小修复 | 写出 A 处产生、B 处表现的调试协议 |
 | 5 | 30 分钟 | 权限、独立 review、验证与复盘 | 完成一页检查清单 |
-| 6 | 30～60 分钟 | SWE-bench C++ 练习 | 得到 patch、评分报告和复盘记录 |
+| 6 | 30～60 分钟 | fmt C++ 小型 Demo | 得到 patch、可见测试结果和复盘记录 |
 
-完成主线后，可再用 4～8 小时或多个会话运行 [curl 长任务实验室](lab/curl-variable-long-task/README.md)，练习大型仓库地图、外部状态、跨模块集成和断点恢复。它与第 6 次的局部 Bug 修复不是同一个难度层级。
+两个 Lab 默认都有不依赖 Docker 的宿主机 Demo，统一入口见
+[Lab 导航](lab/README.md)。完成主线后，可再用 4～8 小时或多个会话运行
+[curl 长任务实验室](lab/curl-variable-long-task/README.md)，练习大型仓库地图、
+外部状态、跨模块集成和断点恢复。容器化固定环境与独立评分保留为可选进阶模式。
 
 先读 [01：必要原理](docs/01_foundations.md)，再把 [02：实战手册](docs/02_coding_agent_playbook.md) 作为日常主线。真正执行任务时打开 [03：个人实践](docs/03_personal_practice.md)。
 
@@ -63,5 +67,8 @@ references/                    # 论文、官方资料与基准选择依据
 
 - 原理和方法以稳定资料为主，资料核对日期为 **2026-07-19**。
 - 模型名称、价格、上下文长度、产品权限和榜单成绩变化较快，不进入主学习路线；使用前查阅官方最新资料。
-- 两个实验室都固定上游源码、评分输入和容器基础；长任务还在首次准备和离线导入时强制运行正负控制。单个公开任务只能作为学习和 smoke test，不能代表完整模型能力。
-- `lab/**/.runtime/`、`lab/**/runs/` 和离线镜像包不提交 Git。
+- 两个实验室的默认 Demo 固定上游源码，但直接使用宿主工具链、可见测试和公开答案，
+  只用于教学展示；进阶模式继续固定评分输入和容器基础。单个公开任务不能代表完整
+  模型能力。
+- `lab/**/.demo/`、`lab/**/demo-runs/`、`lab/**/.runtime/`、
+  `lab/**/runs/` 和离线镜像包不提交 Git。

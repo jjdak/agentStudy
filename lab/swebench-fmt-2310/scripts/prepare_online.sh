@@ -29,7 +29,7 @@ fi
 export PIP_DISABLE_PIP_VERSION_CHECK=1
 export PIP_CACHE_DIR="$RUNTIME_DIR/pip-cache"
 "$VENV_DIR/bin/python" -m pip install --requirement "$LAB_ROOT/requirements.lock"
-"$VENV_DIR/bin/python" -m pip install --no-deps "$HARNESS_DIR"
+"$VENV_DIR/bin/python" -m pip install --no-deps --editable "$HARNESS_DIR"
 
 docker pull "$IMAGE_DIGEST_REF"
 docker tag "$IMAGE_DIGEST_REF" "$IMAGE_REF"

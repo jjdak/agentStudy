@@ -2,6 +2,48 @@
 
 这个练习使用 SWE-bench Multilingual 的真实任务 `fmtlib__fmt-2310`。目标是练习“布置任务—隔离 Agent—收集 patch—独立评分—人工复盘”，不是比较 Prompt 长短，也不是用一道题给模型排名。
 
+## 首选：无 Docker 教学 Demo
+
+如果目的是学习 Coding Agent 的基本修复流程，先用这个模式。它只下载约
+800 KB 的 fmt 源码，直接调用宿主机 `c++` 编译一个可见的 smoke test，不需要
+Docker、Python、SWE-bench、隐藏答案或特殊文件系统权限。
+
+Ubuntu/Debian 通常只需：
+
+```bash
+sudo apt-get install build-essential curl git tar
+```
+
+完整演示：
+
+```bash
+cd lab/swebench-fmt-2310
+./scripts/demo.sh check
+./scripts/demo.sh new demo-small
+./scripts/demo.sh test demo-small        # 修复前应失败
+
+codex -C "$PWD/demo-runs/demo-small/workspace"
+
+./scripts/demo.sh test demo-small        # 检查 Agent 的修改
+./scripts/demo.sh answer demo-small      # 查看公开参考答案
+```
+
+如果只想演示“失败 → 应用答案 → 通过”：
+
+```bash
+./scripts/demo.sh answer demo-small --apply
+./scripts/demo.sh test demo-small
+```
+
+任务文本在 workspace 的 `TASK.md`，参考实现直接保存在
+[`answers/reference.patch`](answers/reference.patch)。Demo 不追求盲测或模型排名，
+允许查看答案、联网和人工提示。
+
+## 进阶：严格 SWE-bench 模式
+
+以下流程保留原有 Docker、固定镜像、独立评分和运行记录，适合学完 Demo 后研究
+隔离、可复现评估与实验设计。它不是完成本次教学练习的前置条件。
+
 ## 1. 信任边界
 
 ```text
@@ -33,9 +75,32 @@ Apple Silicon 上的运行不作为标准结果。当前仓库开发机没有 Do
 
 ```sh
 cd lab/swebench-fmt-2310
+./scripts/bootstrap_host.sh
 ./scripts/check_host.sh
 ./scripts/prepare_online.sh
 ```
+
+`bootstrap_host.sh` 是可选的主机依赖安装器，目前支持 Debian/Ubuntu
+`x86_64`。请使用普通登录用户运行；脚本只在安装系统包、启动 Docker 和配置
+Docker 用户组时调用 `sudo`。它优先从 APT 安装 Python 3.11；如果当前软件源
+没有对应包，则使用固定版本的 `uv` 将 Python 安装到 `/opt/swebench-uv-python`，
+并在 `/usr/local/bin` 创建命令入口。如果脚本新增了 Docker 用户组成员关系，
+需要退出并重新登录后再继续；Docker 用户组等价于授予该用户主机上的高权限，
+只应为可信用户配置。已经自行准备好主机依赖时，可以跳过此脚本。
+
+`check_host.sh` 始终只检查环境，不会安装软件或修改主机。
+
+如果主机通过代理联网，Docker daemon 不会自动继承当前终端的代理变量。显式
+要求安装器把当前 `HTTP_PROXY`、`HTTPS_PROXY` 和 `NO_PROXY` 写入 Docker
+systemd 服务配置：
+
+```sh
+./scripts/bootstrap_host.sh --docker-proxy-from-env
+```
+
+代理配置可能包含敏感信息，因此脚本以 `0600` 权限保存配置。修改代理变量后需
+重新运行上述命令；不再使用代理时，应由管理员删除
+`/etc/systemd/system/docker.service.d/http-proxy.conf` 并重启 Docker。
 
 `prepare_online.sh` 会：
 
@@ -75,9 +140,12 @@ runs/run-001/
 如果 Agent 需要在固定 Linux 工具链中运行公开构建或测试，不要给它 Docker socket。只允许调用这个包装器：
 
 ```sh
-./scripts/run_in_toolchain.sh run-001 -- cmake -S . -B build
-./scripts/run_in_toolchain.sh run-001 -- cmake --build build -j 4
+./scripts/run_in_toolchain.sh run-001 -- cmake -S . -B build-agent
+./scripts/run_in_toolchain.sh run-001 -- cmake --build build-agent -j 4
 ```
+
+使用新的 `build-agent` 目录，避免官方任务快照可能自带的 `build/`
+`CMakeCache.txt` 仍记录镜像内 `/testbed` 路径。
 
 包装器只挂载当前 run 的 `workspace/`，关闭容器网络，丢弃 Linux capabilities，并限制 CPU、内存和进程数。需要复合命令时可显式使用 `-- bash -lc '<command>'`；Agent 的工具 allowlist 仍应只开放包装器，而不是任意 `docker` 命令。
 
