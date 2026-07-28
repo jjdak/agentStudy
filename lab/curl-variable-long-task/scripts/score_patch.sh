@@ -20,10 +20,13 @@ fi
 
 require_scoring_assets
 require_command jq
-require_command timeout
+timeout_bin=$(timeout_executable)
+runtime=$(runtime_backend)
+toolchain_ref=$(runtime_ref)
+toolchain_identifier=$(toolchain_id)
 mkdir -p "$result_dir"
 result_dir=$(cd "$result_dir" && pwd)
-work=$(mktemp -d)
+work=$(lab_mktemp)
 trap 'rm -rf "$work"' EXIT
 source_tree="$work/source"
 score_started_epoch=$(date +%s)
@@ -71,27 +74,62 @@ if [ "$patch_exit" -eq 0 ]; then
     git -C "$source_tree" clean -q -f -d -- tests
 fi
 
-mapfile -t security_args < <(container_common_args)
+security_args=()
+bwrap_args=()
+if [ "$runtime" = docker ]; then
+    while IFS= read -r security_arg; do
+        security_args+=("$security_arg")
+    done < <(container_common_args)
+else
+    set_bwrap_command
+    while IFS= read -r bwrap_arg; do
+        bwrap_args+=("$bwrap_arg")
+    done < <(bwrap_common_args "$source_tree")
+    bwrap_args+=(
+        --setenv ASAN_OPTIONS detect_leaks=1:halt_on_error=1:abort_on_error=1
+        --setenv UBSAN_OPTIONS halt_on_error=1:print_stacktrace=1
+    )
+fi
 run_stage() {
     local timeout_seconds=$1
     local log_file=$2
     local command_text=$3
-    shift 3
+    local oracle_file=${4:-}
     local stage_started stage_exit
     stage_started=$(date +%s)
-    timeout --foreground --kill-after=15s "${timeout_seconds}s" \
-        docker run --rm \
-        "${security_args[@]}" \
-        --user "$(id -u):$(id -g)" \
-        --env HOME=/home/agent \
-        --env LANG=C.UTF-8 \
-        --env ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 \
-        --env UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
-        --workdir /workspace \
-        --mount "type=bind,src=$source_tree,dst=/workspace" \
-        "$@" \
-        "$IMAGE_REF" bash -lc "$command_text" \
-        >"$log_file" 2>&1
+    if [ "$runtime" = docker ]; then
+        docker_extra_args=()
+        if [ -n "$oracle_file" ]; then
+            docker_extra_args=(
+                --mount "type=bind,src=$oracle_file,dst=/black_box_tests.sh,readonly"
+            )
+        fi
+        "$timeout_bin" --foreground --kill-after=15s "${timeout_seconds}s" \
+            docker run --rm \
+            "${security_args[@]}" \
+            --user "$(id -u):$(id -g)" \
+            --env HOME=/home/agent \
+            --env LANG=C.UTF-8 \
+            --env ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:abort_on_error=1 \
+            --env UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+            --workdir /workspace \
+            --mount "type=bind,src=$source_tree,dst=/workspace" \
+            ${docker_extra_args[@]+"${docker_extra_args[@]}"} \
+            "$IMAGE_REF" bash -lc "$command_text" \
+            >"$log_file" 2>&1
+    else
+        bwrap_extra_args=()
+        if [ -n "$oracle_file" ]; then
+            bwrap_extra_args=(--ro-bind "$oracle_file" /black_box_tests.sh)
+        fi
+        "$timeout_bin" --foreground --kill-after=15s "${timeout_seconds}s" \
+            "${BWRAP_COMMAND[@]}" \
+            "${bwrap_args[@]}" \
+            ${bwrap_extra_args[@]+"${bwrap_extra_args[@]}"} \
+            /usr/bin/prlimit --nproc="$LAB_CONTAINER_PIDS" -- \
+            /bin/bash -lc "$command_text" \
+            >"$log_file" 2>&1
+    fi
     stage_exit=$?
     LAST_STAGE_SECONDS=$(($(date +%s) - stage_started))
     return "$stage_exit"
@@ -133,7 +171,7 @@ fi
 if $build_passed; then
     run_stage "$LAB_TEST_TIMEOUT" "$result_dir/03-black-box.log" \
         'CURL_BIN=/workspace/build-lab/src/curl /black_box_tests.sh' \
-        --mount "type=bind,src=$EVALUATOR_DIR/black_box_tests.sh,dst=/black_box_tests.sh,readonly"
+        "$EVALUATOR_DIR/black_box_tests.sh"
     black_box_exit=$?
     black_box_seconds=$LAST_STAGE_SECONDS
     [ "$black_box_exit" -eq 0 ] && black_box_passed=true
@@ -179,8 +217,11 @@ fi
 jq -n \
     --arg evaluated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --arg patch_sha256 "$(sha256_file "$patch_file")" \
-    --arg image_ref "$IMAGE_REF" \
-    --arg image_id "$(image_id)" \
+    --arg runtime "$runtime" \
+    --arg toolchain_ref "$toolchain_ref" \
+    --arg toolchain_id "$toolchain_identifier" \
+    --arg container_cpus "$LAB_CONTAINER_CPUS" \
+    --arg container_memory "$LAB_CONTAINER_MEMORY" \
     --argjson patch_applied "$patch_applied" \
     --argjson build_passed "$build_passed" \
     --argjson black_box_passed "$black_box_passed" \
@@ -189,6 +230,9 @@ jq -n \
     --argjson full_requested "$full_requested" \
     --argjson full_passed "$full_json" \
     --argjson test_files_ignored "$test_files_ignored" \
+    --argjson container_pids "$LAB_CONTAINER_PIDS" \
+    --argjson build_timeout_seconds "$LAB_BUILD_TIMEOUT" \
+    --argjson test_timeout_seconds "$LAB_TEST_TIMEOUT" \
     --argjson patch_exit "$patch_exit" \
     --argjson build_exit "$build_exit" \
     --argjson black_box_exit "$black_box_exit" \
@@ -203,7 +247,11 @@ jq -n \
     --argjson full_seconds "$full_seconds" \
     --argjson resolved "$resolved" \
     '{evaluated_at:$evaluated_at,patch_sha256:$patch_sha256,
-      image_ref:$image_ref,image_id:$image_id,
+      runtime:$runtime,toolchain_ref:$toolchain_ref,toolchain_id:$toolchain_id,
+      resource_limits:{cpus:$container_cpus,memory:$container_memory,
+                       pids:$container_pids,
+                       build_timeout_seconds:$build_timeout_seconds,
+                       test_timeout_seconds:$test_timeout_seconds},
       patch_applied:$patch_applied,build_passed:$build_passed,
       black_box_passed:$black_box_passed,upstream_hidden_passed:$hidden_passed,
       regression_passed:$regression_passed,

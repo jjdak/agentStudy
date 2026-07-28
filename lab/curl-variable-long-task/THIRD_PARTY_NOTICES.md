@@ -7,5 +7,11 @@ distributed under the curl license; a copy is stored in
 
 The toolchain image is based on the official Debian `bookworm-slim` image and
 installs Debian packages during preparation. The exact installed package list
-and resulting local image ID are recorded under `.runtime/`; export the
-offline bundle to preserve that prepared environment.
+and resulting toolchain ID are recorded under `.runtime/`; export the offline
+bundle to preserve that prepared environment.
+
+The portable bundle redistributes the extracted Debian package files, including
+Bubblewrap. Debian package copyright and license files remain inside the
+rootfs under `/usr/share/doc/*/copyright` and must be preserved with the
+bundle. Bubblewrap is maintained at
+[containers/bubblewrap](https://github.com/containers/bubblewrap).

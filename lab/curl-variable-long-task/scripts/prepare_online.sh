@@ -5,6 +5,8 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=common.sh
 source "$SCRIPT_DIR/common.sh"
 
+export LAB_RUNTIME=docker
+require_command curl
 "$SCRIPT_DIR/check_host.sh"
 mkdir -p "$DOWNLOAD_DIR" "$RUNTIME_DIR/toolchain"
 
@@ -16,8 +18,7 @@ docker build --platform linux/amd64 \
     --tag "$IMAGE_REF" \
     "$LAB_ROOT/docker"
 
-[ "$(docker image inspect --format '{{.Architecture}}' "$IMAGE_REF")" = amd64 ] \
-    || die "built image is not linux/amd64"
+verify_toolchain_architecture
 image_id >"$RUNTIME_DIR/toolchain/image-id.txt"
 docker run --rm --platform linux/amd64 --network none "$IMAGE_REF" \
     dpkg-query -W -f='${Package}\t${Version}\n' \

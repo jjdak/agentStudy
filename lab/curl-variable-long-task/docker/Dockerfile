@@ -8,6 +8,7 @@ RUN apt-get update \
         autoconf \
         automake \
         bash \
+        bubblewrap \
         build-essential \
         ca-certificates \
         cmake \
@@ -24,6 +25,7 @@ RUN apt-get update \
         python3 \
         ripgrep \
         strace \
+        util-linux \
     && sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen \
     && locale-gen \
     && rm -rf /var/lib/apt/lists/*
@@ -33,5 +35,7 @@ ENV LC_ALL=en_US.UTF-8
 
 LABEL org.opencontainers.image.title="agentStudy curl variable toolchain"
 LABEL org.opencontainers.image.source="https://github.com/jjdak/agentStudy"
+
+RUN touch /black_box_tests.sh
 
 WORKDIR /workspace

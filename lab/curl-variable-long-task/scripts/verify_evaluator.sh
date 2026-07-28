@@ -6,6 +6,8 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$SCRIPT_DIR/common.sh"
 
 require_scoring_assets
+runtime=$(runtime_backend)
+toolchain_identifier=$(toolchain_id)
 self_check="$EVALUATOR_DIR/self-check"
 rm -rf "$self_check" "$EVALUATOR_DIR/VERIFIED.json"
 mkdir -p "$self_check"
@@ -32,12 +34,20 @@ jq -n \
     --arg verified_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     --arg source_sha256 "$LAB_SOURCE_SHA256" \
     --arg gold_patch_sha256 "$LAB_GOLD_PATCH_SHA256" \
+    --arg config_sha256 "$(sha256_file "$LAB_ROOT/config.env")" \
     --arg oracle_sha256 "$(sha256_file "$EVALUATOR_DIR/black_box_tests.sh")" \
     --arg hidden_manifest_sha256 "$(sha256_file "$EVALUATOR_DIR/hidden-tests.sha256")" \
-    --arg image_id "$(image_id)" \
+    --arg runtime "$runtime" \
+    --arg toolchain_id "$toolchain_identifier" \
+    --argjson build_timeout_seconds "$LAB_BUILD_TIMEOUT" \
+    --argjson test_timeout_seconds "$LAB_TEST_TIMEOUT" \
     '{verified_at:$verified_at,source_sha256:$source_sha256,
       gold_patch_sha256:$gold_patch_sha256,oracle_sha256:$oracle_sha256,
-      hidden_manifest_sha256:$hidden_manifest_sha256,image_id:$image_id,
+      config_sha256:$config_sha256,
+      hidden_manifest_sha256:$hidden_manifest_sha256,
+      runtime:$runtime,toolchain_id:$toolchain_id,
+      build_timeout_seconds:$build_timeout_seconds,
+      test_timeout_seconds:$test_timeout_seconds,
       controls:{negative:{build_passed:true,resolved:false},gold:{resolved:true}}}' \
     >"$EVALUATOR_DIR/VERIFIED.json"
 

@@ -9,7 +9,7 @@ require_downloads
 require_command git
 require_command tar
 
-tmp=$(mktemp -d)
+tmp=$(lab_mktemp)
 trap 'rm -rf "$tmp"' EXIT
 
 rm -rf "$EVALUATOR_DIR"

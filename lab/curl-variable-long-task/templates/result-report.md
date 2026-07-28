@@ -8,8 +8,11 @@
 | Agent / version | |
 | Model / exact version | |
 | Source SHA-256 | |
+| Config SHA-256 | |
 | Prompt SHA-256 | |
-| Toolchain image ID | |
+| Runtime | |
+| Toolchain ID | |
+| Resource limits and timeouts | |
 | Network and permission policy | |
 | Context/tool/time budget | |
 
@@ -50,4 +53,4 @@
 
 ## Cross-run comparison
 
-Compare only runs with identical source, prompt, harness, permissions, budgets and image ID. Report all repetitions, including failures; do not select only the best run.
+Compare only runs with identical source, prompt, harness, runtime, permissions, budgets and toolchain ID. Report all repetitions, including failures; do not select only the best run.

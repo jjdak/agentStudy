@@ -5,6 +5,7 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=common.sh
 source "$SCRIPT_DIR/common.sh"
 
+export LAB_RUNTIME=docker
 require_prepared
 destination=${1:-$LAB_ROOT/offline-bundles/${LAB_TASK_ID}-$(date -u +%Y%m%dT%H%M%SZ)}
 [ ! -e "$destination" ] || die "destination already exists: $destination"

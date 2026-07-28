@@ -5,6 +5,7 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=common.sh
 source "$SCRIPT_DIR/common.sh"
 
+export LAB_RUNTIME=docker
 [ "$#" -eq 1 ] || die "usage: $0 BUNDLE_DIRECTORY"
 bundle=$(cd "$1" && pwd)
 "$SCRIPT_DIR/check_host.sh"
@@ -34,6 +35,7 @@ cp "$bundle/packages.tsv" "$RUNTIME_DIR/toolchain/packages.tsv"
 docker load --input "$bundle/toolchain-image.tar"
 [ "$(image_id)" = "$(cat "$bundle/image-id.txt")" ] \
     || die "loaded toolchain image ID does not match the bundle"
+verify_toolchain_architecture
 
 "$SCRIPT_DIR/prepare_evaluator.sh"
 "$SCRIPT_DIR/verify_evaluator.sh"

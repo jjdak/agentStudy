@@ -4,7 +4,7 @@
 - Agent and version:
 - Model and exact version:
 - Date:
-- WSL/Linux and Docker versions:
+- Host OS and runtime versions:
 - Network policy:
 - Sandbox and writable roots:
 - Model/tool budget:
