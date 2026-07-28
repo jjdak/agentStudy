@@ -30,8 +30,9 @@ docs/
 
 html/                          # 三篇文档的 HTML 阅读版及 01 分页演示版
 lab/swebench-fmt-2310/         # fmt 局部缺陷 Demo；可选严格 SWE-bench 模式
+lab/swebench-fmt-2457/         # fmt 中型模板功能；只需普通 C++ 编译器
 lab/curl-variable-long-task/   # curl 跨模块 Demo；可选容器化独立评分
-lab/README.md                  # 一大一小两个无 Docker 教学 Demo 入口
+lab/README.md                  # 小型、中型和大型教学 Demo 入口
 references/                    # 论文、官方资料与基准选择依据
 ```
 
@@ -48,8 +49,10 @@ references/                    # 论文、官方资料与基准选择依据
 | 5 | 30 分钟 | 权限、独立 review、验证与复盘 | 完成一页检查清单 |
 | 6 | 30～60 分钟 | fmt C++ 小型 Demo | 得到 patch、可见测试结果和复盘记录 |
 
-两个 Lab 默认都有不依赖 Docker 的宿主机 Demo，统一入口见
-[Lab 导航](lab/README.md)。完成主线后，可再用 4～8 小时或多个会话运行
+完成小型 Demo 后，软件安装受限的内部环境可以继续运行
+[fmt 中型任务](lab/swebench-fmt-2457/README.md)，它使用相同的宿主依赖，但增加
+变参模板、规格解析和异构 tuple 等难度。统一入口见 [Lab 导航](lab/README.md)。
+如能准备额外构建依赖，可再用 4～8 小时或多个会话运行
 [curl 长任务实验室](lab/curl-variable-long-task/README.md)，练习大型仓库地图、
 外部状态、跨模块集成和断点恢复。容器化固定环境与独立评分保留为可选进阶模式。
 
@@ -67,7 +70,7 @@ references/                    # 论文、官方资料与基准选择依据
 
 - 原理和方法以稳定资料为主，资料核对日期为 **2026-07-19**。
 - 模型名称、价格、上下文长度、产品权限和榜单成绩变化较快，不进入主学习路线；使用前查阅官方最新资料。
-- 两个实验室的默认 Demo 固定上游源码，但直接使用宿主工具链、可见测试和公开答案，
+- 三个实验室的默认 Demo 固定上游源码，但直接使用宿主工具链、可见测试和公开答案，
   只用于教学展示；进阶模式继续固定评分输入和容器基础。单个公开任务不能代表完整
   模型能力。
 - `lab/**/.demo/`、`lab/**/demo-runs/`、`lab/**/.runtime/`、

@@ -1,0 +1,4 @@
+.demo/
+demo-runs/
+*.tar
+*.tar.gz

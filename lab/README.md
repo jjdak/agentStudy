@@ -1,14 +1,19 @@
 # Coding Agent 教学 Demo
 
-这里提供一小一大两个真实开源任务。默认路径直接使用宿主机工具，不需要 Docker、
-Bubblewrap、Python 评测框架或严格沙箱；测试和参考答案都是可见的。
+这里提供小型、中型和大型三个真实开源任务。前两个 fmt Lab 只需要普通 C++ 编译器，
+适合软件安装受限的内部环境；curl Lab 用于进阶的跨模块长任务。默认路径都不需要
+Docker、Bubblewrap、Python 评测框架或严格沙箱，测试和参考答案也是可见的。
 
 | Demo | 规模 | 主要练习 | 宿主要求 | 典型时间 |
 |---|---:|---|---|---:|
 | [fmt 小型修复](swebench-fmt-2310/README.md) | 约 2 个核心文件 | 复现、定位、最小修复、回归 | `c++`、Git、curl、tar | 15～40 分钟 |
-| [curl 大型功能](curl-variable-long-task/README.md) | 参考实现约 32 个文件 | 仓库地图、规格、分包、状态外置、跨会话恢复 | C 工具链、Autotools、Perl | 2～8 小时 |
+| [fmt 中型功能](swebench-fmt-2457/README.md) | 约 82 行参考修改 | 变参模板、规格解析、异构 tuple、边界 | `c++`、Git、curl、tar | 40～120 分钟 |
+| [curl 大型功能（重环境）](curl-variable-long-task/README.md) | 参考实现约 32 个文件 | 仓库地图、规格、分包、跨会话恢复 | C 工具链、Autotools、Perl | 2～8 小时 |
 
-## 两个代码问题
+内部环境建议按 `fmt-2310 → fmt-2457` 学习。只有需要演示大型仓库工作包和跨会话
+状态时，再准备 curl 的额外构建依赖。
+
+## 三个代码问题
 
 ### fmt：`inf`/`nan` 被错误地零填充
 
@@ -22,6 +27,21 @@ fmt::format("{:+06}", NAN)  // 错误："00+nan"，期望："  +nan"
 
 练习目标是追踪格式解析和非有限数值输出路径，完成最小修复，同时保持有限数值及
 显式左、中、右对齐行为不变。
+
+### fmt 中型任务：tuple join 不支持格式规格
+
+范围版本的 `fmt::join` 会将外层规格应用到每个元素，但 tuple 版本会抛出异常：
+
+```cpp
+fmt::format("{:02}", fmt::join(std::vector<int>{1, 2, 3}, ", "));
+// "01, 02, 03"
+
+fmt::format("{:02}", fmt::join(std::make_tuple(1, 2, 3), ", "));
+// 当前抛出 format_error，期望 "01, 02, 03"
+```
+
+练习目标是为 tuple 中的每种元素类型持有独立 formatter，使它们一致解析外层规格，
+然后递归格式化空 tuple、同构 tuple 和异构 tuple。环境与小型 fmt Demo 完全相同。
 
 ### curl：缺少命令行变量和选项展开
 
@@ -52,7 +72,23 @@ codex -C "$PWD/demo-runs/demo-small/workspace"
 ./scripts/demo.sh answer demo-small
 ```
 
-## 大型 Demo
+## 中型 Demo
+
+```bash
+cd lab/swebench-fmt-2457
+./scripts/demo.sh new demo-medium
+./scripts/demo.sh test demo-medium
+codex -C "$PWD/demo-runs/demo-medium/workspace"
+```
+
+应用可见参考答案并复验：
+
+```bash
+./scripts/demo.sh answer demo-medium --apply
+./scripts/demo.sh test demo-medium
+```
+
+## 大型重环境 Demo
 
 ```bash
 cd lab/curl-variable-long-task
@@ -71,7 +107,7 @@ workspace 内的 `TASK.md` 是任务入口，`.agent/` 中的文件用于保存�
 
 ## 统一命令
 
-两个 Lab 都提供相同的基本接口：
+三个 Lab 都提供相同的基本接口：
 
 ```text
 demo.sh check                   检查普通宿主依赖
