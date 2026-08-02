@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "label": "deepseek-v4-flash-0731",
+  "requested_model": "deepseek/deepseek-v4-flash",
+  "opencode_version": "1.18.11",
+  "questions_sha256": "245c4d950832dca38c9ac5a0846ecb03debe71336e5bc3f71f966a98e7c0603c",
+  "request_count": 120,
+  "started_at": "2026-08-02T14:50:10.374915+00:00",
+  "warmup_count": 1,
+  "cold_start_excluded": true,
+  "each_question_new_session": true,
+  "completed": true,
+  "development_limit": null,
+  "transport": "direct_run",
+  "warmup_seconds": 3.973,
+  "warmup_exit_code": 0,
+  "finished_at": "2026-08-02T15:11:51.362983+00:00"
+}

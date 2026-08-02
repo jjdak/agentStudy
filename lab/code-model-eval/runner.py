@@ -160,7 +160,7 @@ def write_summary(result_dir: Path, questions: list[dict]) -> None:
                 records[row["id"]] = row
     with (result_dir / "answers.csv").open("w", encoding="utf-8", newline="") as handle:
         fields = ["id", "benchmark", "subset", "status", "prediction", "answer", "correct", "wall_seconds", "tool_events"]
-        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         for question in questions:
             row = records.get(question["id"], {})

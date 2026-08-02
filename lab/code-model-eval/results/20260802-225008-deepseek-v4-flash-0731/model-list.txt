@@ -1,0 +1,11 @@
+opencode/big-pickle
+opencode/deepseek-v4-flash-free
+opencode/laguna-s-2.1-free
+opencode/ling-3.0-flash-free
+opencode/mimo-v2.5-free
+opencode/nemotron-3-ultra-free
+opencode/north-mini-code-free
+deepseek/deepseek-chat
+deepseek/deepseek-reasoner
+deepseek/deepseek-v4-flash
+deepseek/deepseek-v4-pro
